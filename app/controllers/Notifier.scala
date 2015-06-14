@@ -44,7 +44,6 @@ object Notifier {
     val newDoc = BSONDocument(
       "name" -> user
     )
-    Some
 
     val updateDoc = BSONDocument(
       "name" -> user,
