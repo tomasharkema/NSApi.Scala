@@ -4,12 +4,14 @@ import api.{Advice, NSApi}
 import connection.Connection
 import org.joda.time.DateTime
 import play.api.libs.iteratee.Iteratee
+import play.api.libs.ws.{WSAuthScheme, WS}
 import reactivemongo.api._
 import reactivemongo.bson._
 import reactivemongo.bson.BSONDocument
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import play.api.Play.current
 
 /**
  * Created by tomas on 14-06-15.
@@ -70,6 +72,11 @@ object Notifier {
 
   private def notifyUser(advice: Advice, user: String) = {
    println("Notify users: " + user, advice.vertrekVertraging)
+    WS.url(sys.env.getOrElse("PROD_EMAIL_ENDPOINT", "localhost"))
+      .withAuth(sys.env.getOrElse("PROD_EMAIL_USER", "localhost"), sys.env.getOrElse("PROD_EMAIL_PASS", "localhost"), WSAuthScheme.BASIC)
+      .post(Map("to" -> Seq("tomas <tomas@harkema.in>"), "subject" -> Seq("Notify"), "message" -> Seq(advice.toString))).map { response =>
+      println(response.json)
+    }
   }
 
   private def updateIfNeeded(advice: Advice): Future[Updateable] = {

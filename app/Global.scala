@@ -1,5 +1,6 @@
 import _root_.actor.PushActor
 import akka.actor
+import play.api.libs.ws.{WSAuthScheme, WS}
 
 import scala.annotation.implicitNotFound
 import scala.concurrent.duration.DurationInt
@@ -11,12 +12,17 @@ import play.api.Play
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.concurrent.Akka
 import akka.actor.Props
+import play.api.Play.current
 
 /**
  * Created by tomas on 14-06-15.
  */
 object Global extends GlobalSettings {
   override def onStart(app: Application) = {
+    WS.url(sys.env.getOrElse("PROD_EMAIL_ENDPOINT", "http://localhost"))
+      .withAuth(sys.env.getOrElse("PROD_EMAIL_USER", "localhost"), sys.env.getOrElse("PROD_EMAIL_PASS", "localhost"), WSAuthScheme.BASIC)
+      .post(Map("to" -> Seq("tomas <tomas@harkema.in>"), "subject" -> Seq("Came Up"), "message" -> Seq("Came up")))
+
     val controllerPath = controllers.routes.Ping.ping.url
     play.api.Play.mode(app) match {
       case play.api.Mode.Test => // do not schedule anything for Test
