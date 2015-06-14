@@ -20,9 +20,11 @@ import play.api.Play.current
 object Global extends GlobalSettings {
   override def onStart(app: Application) = {
     WS.url(sys.env.getOrElse("PROD_EMAIL_ENDPOINT", "http://localhost"))
-      .withAuth(sys.env.getOrElse("PROD_EMAIL_USER", "localhost"), sys.env.getOrElse("PROD_EMAIL_PASS", "localhost"), WSAuthScheme.BASIC)
-      .post(Map("to" -> Seq("tomas <tomas@harkema.in>"), "subject" -> Seq("Came Up"), "message" -> Seq("Came up")))
-
+      .withAuth(sys.env.getOrElse("PROD_EMAIL_USER", "local"), sys.env.getOrElse("PROD_EMAIL_PASS", "local"), WSAuthScheme.BASIC)
+      .post(Map("from" -> Seq("tomas@harkema.in"), "to" -> Seq("tomas@harkema.in"), "subject" -> Seq("Came Up"), "text" -> Seq("Came up")))
+      .map { res =>
+      println("EMAIL "+ res)
+    }
     val controllerPath = controllers.routes.Ping.ping.url
     play.api.Play.mode(app) match {
       case play.api.Mode.Test => // do not schedule anything for Test

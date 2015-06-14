@@ -74,8 +74,9 @@ object Notifier {
    println("Notify users: " + user, advice.vertrekVertraging)
     WS.url(sys.env.getOrElse("PROD_EMAIL_ENDPOINT", "localhost"))
       .withAuth(sys.env.getOrElse("PROD_EMAIL_USER", "localhost"), sys.env.getOrElse("PROD_EMAIL_PASS", "localhost"), WSAuthScheme.BASIC)
-      .post(Map("to" -> Seq("tomas <tomas@harkema.in>"), "subject" -> Seq("Notify"), "message" -> Seq(advice.toString))).map { response =>
-      println(response.json)
+      .post(Map("to" -> Seq("tomas@harkema.in"), "from" -> Seq("tomas@harkema.in"), "subject" -> Seq("Notify"), "text" -> Seq(advice.toString)))
+      .map { res =>
+      println("EMAIL "+ res)
     }
   }
 
