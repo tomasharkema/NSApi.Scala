@@ -1,0 +1,18 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET        /                                    controllers.Application.index
+
+# Map static resources from the /public folder to the /assets URL path
+GET        /assets/*file                        controllers.Assets.versioned(path="/public", file: Asset)
+
+GET        /api/stations                        controllers.Api.stations
+GET        /api/advices                         controllers.Api.advices
+GET        /api/advices/future                  controllers.Api.advicesFuture
+GET        /api/advices/first                   controllers.Api.adviceFirstPossible
+GET        /api/register/:name/:from/:to        controllers.Api.registerStation(name, from, to)
+GET        /api/register/:name/:uuid            controllers.Api.registerUUID(name, uuid)
+
+GET        /ping                                controllers.Ping.ping
