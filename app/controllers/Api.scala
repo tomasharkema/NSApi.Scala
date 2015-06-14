@@ -65,14 +65,12 @@ class Api extends Controller {
   }
 
   def registerStation(user: String, from: String, to: String) = Action.async {
-    Notifier.notifyUsers
     Notifier.registerStation(user, from, to).map { res =>
       Ok(Json.obj("success" -> res.ok))
     }
   }
 
   def registerUUID(user: String, uuid: String) = Action.async {
-    Notifier.notifyUsers
     Notifier.registerUUID(user, uuid).map { res =>
       Ok(Json.obj("success" -> res.ok))
     }

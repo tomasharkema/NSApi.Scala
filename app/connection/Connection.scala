@@ -12,6 +12,7 @@ object Connection {
   def getCollection(collectionName: String): BSONCollection = {
     val driver = new MongoDriver
     val connection = driver.connection(List(sys.env.getOrElse("PROD_MONGODB", "localhost")))
+    Logger.info("MONGO SERVER: " + sys.env.getOrElse("PROD_MONGODB", "localhost"))
 
     // Gets a reference to the database "plugin"
     val db = connection(sys.env.getOrElse("PROD_MONGO_DB", "nsapi"))
