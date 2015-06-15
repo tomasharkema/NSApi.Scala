@@ -1,17 +1,18 @@
 package controllers
 
+import actor.NotifyActor
+import actor.NotifyActor.Email
 import api.{Advice, NSApi}
 import connection.Connection
 import org.joda.time.DateTime
-import play.api.libs.iteratee.Iteratee
-import play.api.libs.ws.{WSAuthScheme, WS}
-import reactivemongo.api._
+import play.api.Logger
+import play.libs.Akka
 import reactivemongo.bson._
 import reactivemongo.bson.BSONDocument
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import play.api.Play.current
+import akka.actor._
 
 /**
  * Created by tomas on 14-06-15.
@@ -26,6 +27,7 @@ object Notifier {
   val collectionUUID = Connection.getCollection("users_uuid")
   val collectionStations = Connection.getCollection("users_stations")
   val collectionAdvices = Connection.getCollection("advices")
+  val notifyActor = Akka.system.actorOf(Props[NotifyActor], name = "notify-actor")
 
   def registerUUID(user: String, uuid: String) = {
     val newDoc = BSONDocument(
@@ -71,13 +73,8 @@ object Notifier {
   }
 
   private def notifyUser(advice: Advice, user: String) = {
-   println("Notify users: " + user, advice.vertrekVertraging)
-    WS.url(sys.env.getOrElse("PROD_EMAIL_ENDPOINT", "localhost"))
-      .withAuth(sys.env.getOrElse("PROD_EMAIL_USER", "localhost"), sys.env.getOrElse("PROD_EMAIL_PASS", "localhost"), WSAuthScheme.BASIC)
-      .post(Map("to" -> Seq("tomas@harkema.in"), "from" -> Seq("tomas@harkema.in"), "subject" -> Seq("Notify"), "text" -> Seq(advice.toString)))
-      .map { res =>
-      println("EMAIL "+ res)
-    }
+    Logger.debug("Notify users: " + user + " " + advice.vertrekVertraging)
+    notifyActor ! Email(user, "Notification", advice.statusString)
   }
 
   private def updateIfNeeded(advice: Advice): Future[Updateable] = {
@@ -98,6 +95,7 @@ object Notifier {
     }
   }
 
+  // make this more modular without side-effects
   def notifyUsers() = {
     getStationsAndUsers().map { sauFuture =>
       sauFuture.foreach { sau =>
@@ -106,8 +104,10 @@ object Notifier {
 
         NSApi.adviceFirstPossible(stations._1, stations._2).map(_.foreach { advice =>
           updateIfNeeded(advice).map {
-            case NeedsUpdate => users.foreach(notifyUser(advice, _))
-            case _ => println("No update needed for " + advice.request)
+            case NeedsUpdate =>
+              Logger.debug("Notify " + users.size + " users about " + advice.request + " " + advice.vertrekVertraging)
+              users.foreach(notifyUser(advice, _))
+            case _ => Logger.debug("No update needed for " + advice.request + " " + advice.vertrekVertraging)
           }
         })
       }

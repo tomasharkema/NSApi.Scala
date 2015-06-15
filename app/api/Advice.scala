@@ -111,8 +111,7 @@ case class Advice(overstappen: Int,
                   vertrekVertraging: Option[String],
                   status: String,
                   request: AdviceRequest) {
-  def hash =  MessageDigest.getInstance("MD5").digest()
-  def string = request.from + ":" + request.to
+  val statusString = request.from + " " + request.to + " " + vertrekVertraging.getOrElse("")
 }
 
 object Advice {
