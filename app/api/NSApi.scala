@@ -35,15 +35,15 @@ object NSApi {
       (response.xml \\ "Station").map(Station.parseStation)
     }
 
-  def advices(from: String = "KBW", to: String = "Rotterdam Centraal"): Future[Seq[Advice]] = {
+  def advices(from: String, to: String): Future[Seq[Advice]] = {
     nsRequest(TreinPlannerUrl).withQueryString("fromStation" -> from, "toStation" -> to).get().map{ response =>
       (response.xml \\ "ReisMogelijkheid").map(Advice.parseAdvice(_, from, to))
     }
   }
 
-  def advicesFuture(from: String = "KBW", to: String = "Rotterdam Centraal") =
+  def advicesFuture(from: String, to: String) =
     advices(from, to).map(_.filter(_.vertrek.actual.isAfterNow).filter(_.status != "NIET-MOGELIJK"))
 
-  def adviceFirstPossible(from: String = "KBW", to: String = "Rotterdam Centraal") =
+  def adviceFirstPossible(from: String, to: String) =
     advicesFuture(from, to).map(_.headOption)
 }

@@ -25,8 +25,8 @@ class Api extends Controller {
     }
   }
 
-  def advices = Action.async {
-    NSApi.advices().map { advices =>
+  def advices(from: Option[String], to: Option[String]) = Action.async {
+    NSApi.advices(from.orNull, to.orNull).map { advices =>
       val advicesJson = advices.map { advices =>
         Json.toJson(advices)
       }
@@ -38,8 +38,8 @@ class Api extends Controller {
     }
   }
 
-  def advicesFuture = Action.async {
-    NSApi.advicesFuture().map { advices =>
+  def advicesFuture(from: Option[String], to: Option[String]) = Action.async {
+    NSApi.advicesFuture(from.orNull, to.orNull).map { advices =>
       val advicesJson = advices.map { advices =>
         Json.toJson(advices)
       }
@@ -51,15 +51,14 @@ class Api extends Controller {
     }
   }
 
-  def adviceFirstPossible = Action.async {
-    NSApi.adviceFirstPossible().map { advices =>
+  def adviceFirstPossible(from: Option[String], to: Option[String]) = Action.async {
+    NSApi.adviceFirstPossible(from.orNull, to.orNull).map { advices =>
       val advicesJson = advices.map { advices =>
         Json.toJson(advices)
       }
 
       Ok(Json.obj(
-        "advices" -> Json.toJson(advicesJson),
-        "count" -> advicesJson.size.toString
+        "advice" -> Json.toJson(advicesJson)
       ))
     }
   }
