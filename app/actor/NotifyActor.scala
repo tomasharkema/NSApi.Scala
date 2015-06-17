@@ -14,6 +14,7 @@ object NotifyActor {
   def props = Props[NotifyActor]
 
   case class Email(emailaddress: String, subject: String, message: String)
+  case class Push(uuid: String, title: String, message: String)
 }
 
 class NotifyActor extends Actor with ActorLogging {

@@ -1,7 +1,7 @@
 package controllers
 
 import actor.NotifyActor
-import actor.NotifyActor.Email
+import actor.NotifyActor.{Push, Email}
 import api.{Advice, NSApi}
 import connection.Connection
 import org.joda.time.DateTime
@@ -23,20 +23,29 @@ case object New extends Updateable
 case object NeedsUpdate extends Updateable
 case object NoUpdateNeeded extends Updateable
 
+object NotificationType extends Enumeration {
+  val PushNotification = Value("PUSH")
+  val EmailNotification = Value("EMAIL")
+}//(value: String)
+//case object PushNotification extends NotificationType("PUSH")
+//case object EmailNotification extends NotificationType("EMAIL")
+
 object Notifier {
   val collectionUUID = Connection.getCollection("users_uuid")
   val collectionStations = Connection.getCollection("users_stations")
   val collectionAdvices = Connection.getCollection("advices")
   val notifyActor = Akka.system.actorOf(Props[NotifyActor], name = "notify-actor")
 
-  def registerUUID(user: String, uuid: String) = {
+  def registerUUID(user: String, registerType: String,  uuid: String) = {
     val newDoc = BSONDocument(
       "name" -> user,
+      "type" -> registerType,
       "uuid" -> uuid
     )
 
     val updateDoc = BSONDocument(
       "name" -> user,
+      "type" -> registerType,
       "uuid" -> uuid,
       "updated" -> BSONDateTime(DateTime.now().getMillis)
     )
@@ -52,7 +61,8 @@ object Notifier {
     val updateDoc = BSONDocument(
       "name" -> user,
       "from" -> from,
-      "to" -> to
+      "to" -> to,
+      "updated" -> BSONDateTime(DateTime.now().getMillis)
     )
 
     collectionStations.update(newDoc, updateDoc, upsert = true)
@@ -72,9 +82,30 @@ object Notifier {
     }
   }
 
+  private def getNotificationTypesForUser(user: String) = {
+    val userCollection = collectionUUID.find(BSONDocument("name" -> user)).cursor[BSONDocument].collect[List]()
+    userCollection.map(_.map { doc =>
+      val notTypeString = doc.getAs[String]("type")
+      val uuidString = doc.getAs[String]("uuid")
+
+      if (notTypeString.isDefined && uuidString.isDefined) {
+        val notType = NotificationType.withName(notTypeString.get)
+        Some(notType, uuidString.get)
+      } else {
+        None
+      }
+    }.filter(_.isDefined).flatten)
+  }
+
   private def notifyUser(advice: Advice, user: String) = {
     Logger.debug("Notify users: " + user + " " + advice.vertrekVertraging)
-    notifyActor ! Email(user, "Notification", advice.statusString)
+
+    getNotificationTypesForUser(user).map(_.map {
+      case (NotificationType.EmailNotification, email) =>
+        Email(email, "Notification", advice.statusString)
+      case (NotificationType.PushNotification, pushToken) =>
+        Push(pushToken, "Notification", advice.statusString)
+    }.map(notifyActor ! _))
   }
 
   private def updateIfNeeded(advice: Advice): Future[Updateable] = {
@@ -107,7 +138,9 @@ object Notifier {
             case NeedsUpdate =>
               Logger.debug("Notify " + users.size + " users about " + advice.request + " " + advice.vertrekVertraging)
               users.foreach(notifyUser(advice, _))
-            case _ => Logger.debug("No update needed for " + advice.request + " " + advice.vertrekVertraging)
+            case _ =>
+              Logger.debug("No update needed for " + advice.request + " " + advice.vertrekVertraging)
+              //users.foreach(notifyUser(advice, _))
           }
         })
       }
