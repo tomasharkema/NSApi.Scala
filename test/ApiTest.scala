@@ -39,6 +39,21 @@ class ApiTest extends Specification {
       (stations.head \ "coords" \ "lon").get.as[Double] must equalTo(5.29362)
       (stations.head \ "synoniemen").get.as[JsArray].head.get.as[String] must equalTo("Hertogenbosch (\'s)")
     }
-  }
 
+    "should give advice" in new WithApplication {
+
+      val req = FakeRequest(GET, controllers.routes.Api.advices("KBW", "ASD"))
+
+      val Some(result) = route(req)
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      charset(result) must beSome("utf-8")
+      val content = contentAsString(result)
+
+      content must contain("advices")
+
+      val responseNode = Json.parse(contentAsString(result))
+      (responseNode \ "count").as[Int] must greaterThan(1)
+    }
+  }
 }
