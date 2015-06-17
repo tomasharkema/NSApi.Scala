@@ -36,6 +36,8 @@ class ApiTest extends Specification {
       (stations.head \ "code").get.as[String] must equalTo("HT")
       (stations.head \ "land").get.as[String] must equalTo("NL")
       (stations.head \ "coords" \ "lat").get.as[Double] must equalTo(51.69048)
+      (stations.head \ "coords" \ "lon").get.as[Double] must equalTo(5.29362)
+      (stations.head \ "synoniemen").get.as[JsArray].head.get.as[String] must equalTo("Hertogenbosch (\'s)")
     }
   }
 
