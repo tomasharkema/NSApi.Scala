@@ -42,7 +42,7 @@ class ApiTest extends Specification {
 
     "should give advice" in new WithApplication {
 
-      val req = FakeRequest(GET, controllers.routes.Api.advices("KBW", "ASD"))
+      val req = FakeRequest(GET, controllers.routes.Api.advices("KBW", "ASD").url)
 
       val Some(result) = route(req)
       status(result) must equalTo(OK)

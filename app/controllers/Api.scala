@@ -33,7 +33,7 @@ class Api extends Controller {
 
       Ok(Json.obj(
         "advices" -> Json.toJson(advicesJson),
-        "count" -> advicesJson.size.toString
+        "count" -> advicesJson.size
       ))
     }
   }
@@ -46,7 +46,7 @@ class Api extends Controller {
 
       Ok(Json.obj(
         "advices" -> Json.toJson(advicesJson),
-        "count" -> advicesJson.size.toString
+        "count" -> advicesJson.size
       ))
     }
   }
