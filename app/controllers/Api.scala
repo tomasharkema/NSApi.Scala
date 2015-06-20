@@ -20,39 +20,39 @@ class Api extends Controller {
       }
 
       Ok(Json.obj(
-        "advices" -> Json.toJson(stationsJson)
+        "stations" -> Json.toJson(stationsJson)
       ))
     }
   }
 
-  def advices(from: Option[String], to: Option[String]) = Action.async {
-    NSApi.advices(from.orNull, to.orNull).map { advices =>
+  def advices(from: String, to: String) = Action.async {
+    NSApi.advices(from, to).map { advices =>
       val advicesJson = advices.map { advices =>
         Json.toJson(advices)
       }
 
       Ok(Json.obj(
         "advices" -> Json.toJson(advicesJson),
-        "count" -> advicesJson.size.toString
+        "count" -> advicesJson.size
       ))
     }
   }
 
-  def advicesFuture(from: Option[String], to: Option[String]) = Action.async {
-    NSApi.advicesFuture(from.orNull, to.orNull).map { advices =>
+  def advicesFuture(from: String, to: String) = Action.async {
+    NSApi.advicesFuture(from, to).map { advices =>
       val advicesJson = advices.map { advices =>
         Json.toJson(advices)
       }
 
       Ok(Json.obj(
         "advices" -> Json.toJson(advicesJson),
-        "count" -> advicesJson.size.toString
+        "count" -> advicesJson.size
       ))
     }
   }
 
-  def adviceFirstPossible(from: Option[String], to: Option[String]) = Action.async {
-    NSApi.adviceFirstPossible(from.orNull, to.orNull).map { advices =>
+  def adviceFirstPossible(from: String, to: String) = Action.async {
+    NSApi.adviceFirstPossible(from, to).map { advices =>
       val advicesJson = advices.map { advices =>
         Json.toJson(advices)
       }
@@ -69,8 +69,8 @@ class Api extends Controller {
     }
   }
 
-  def registerUUID(user: String, uuid: String) = Action.async {
-    Notifier.registerUUID(user, uuid).map { res =>
+  def registerUUID(user: String, registerType: String, uuid: String) = Action.async {
+    Notifier.registerUUID(user, registerType, uuid).map { res =>
       Ok(Json.obj("success" -> res.ok))
     }
   }

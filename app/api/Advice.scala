@@ -1,11 +1,11 @@
 package api
 
-import java.security.MessageDigest
-
 import org.joda.time.DateTime
-import play.api.libs.json.{Json, JsValue, Writes}
+import play.api.libs.json._
 
 import scala.xml._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
  * Created by tomas on 14-06-15.
@@ -53,6 +53,12 @@ object Melding {
       )
     }
   }
+
+  implicit val readsMelding: Reads[Melding] = (
+    (JsPath \ "id").read[String] and
+      (JsPath \ "ernstig").read[Boolean] and
+      (JsPath \ "text").read[String]
+    )(Melding.apply _)
 }
 
 case class Stop(time: DateTime,
@@ -76,6 +82,16 @@ object Stop {
       )
     }
   }
+
+  implicit val readsStop: Reads[Stop] = new Reads[Stop] {
+    override def reads(json: JsValue): JsResult[Stop] = {
+      JsSuccess(Stop(
+        (json \ "time").get.as[DateTime],
+        (json \ "spoor").get.asOpt[String],
+        (json \ "name").get.as[String]
+      ))
+    }
+  }
 }
 
 case class ReisDeel(vervoerder: String,
@@ -95,13 +111,34 @@ object ReisDeel {
       Json.obj(
         "vervoerder" -> reisDeel.vervoerder,
         "vervoerType" -> reisDeel.vervoerType,
-        "name" -> reisDeel.stops
+        "stops" -> reisDeel.stops
       )
+    }
+  }
+
+  implicit val readsReisDeel: Reads[ReisDeel] = new Reads[ReisDeel] {
+    override def reads(json: JsValue): JsResult[ReisDeel] = {
+      JsSuccess(ReisDeel(
+        vervoerder = (json \ "vervoerder").get.as[String],
+        vervoerType = (json \ "vervoerType").get.as[String],
+        stops = (json \ "stops").get.as[Seq[Stop]]
+      ))
     }
   }
 }
 
 case class AdviceRequest(from: String, to: String)
+
+object AdviceRequest {
+  implicit val readsAdviceRequest: Reads[AdviceRequest] = new Reads[AdviceRequest] {
+    override def reads(json: JsValue): JsResult[AdviceRequest] = {
+      for {
+        from <- (json \ "from").validate[String]
+        to <- (json \ "to").validate[String]
+      } yield AdviceRequest(from, to)
+    }
+  }
+}
 
 case class Advice(overstappen: Int,
                   vertrek: OVTime,
@@ -120,7 +157,7 @@ object Advice {
       overstappen = (el \ "AantalOverstappen").text.toInt,
       vertrek = OVTime.fromString((el \ "GeplandeVertrekTijd").text, (el \ "ActueleVertrekTijd").text),
       aankomst = OVTime.fromString((el \ "GeplandeAankomstTijd").text, (el \ "ActueleAankomstTijd").text),
-      melding = None,
+      melding = (el \ "Melding").headOption.map(Melding.parseMelding),
       reisDeel = (el \\ "ReisDeel").map(ReisDeel.parseReisdeel),
       vertrekVertraging = (el \ "AankomstVertraging").headOption.map(_.text),
       status = (el \ "Status").text,
@@ -128,7 +165,7 @@ object Advice {
     )
   }
 
-  implicit val writesAdivce: Writes[Advice] = new Writes[Advice] {
+  implicit val writesAvice: Writes[Advice] = new Writes[Advice] {
     override def writes(advice: Advice): JsValue = {
       Json.obj(
         "overstappen" -> advice.overstappen,
@@ -137,8 +174,24 @@ object Advice {
         "melding" -> Json.toJson(advice.melding),
         "reisDeel" -> Json.toJson(advice.reisDeel),
         "vertrekVertraging" -> advice.vertrekVertraging,
-        "status" -> advice.status
+        "status" -> advice.status,
+        "request" -> Map("from" -> advice.request.from, "to" -> advice.request.to)
       )
+    }
+  }
+
+  implicit val readsAdvice: Reads[Advice] = new Reads[Advice] {
+    override def reads(json: JsValue) = {
+      JsSuccess(Advice(
+        overstappen = (json \ "overstappen").get.as[Int],
+        vertrek = OVTime(planned = (json \ "vertrek" \ "planned").get.as[DateTime], actual = (json \ "vertrek" \ "actual").get.as[DateTime]),
+        aankomst = OVTime(planned = (json \ "aankomst" \ "planned").get.as[DateTime], actual = (json \ "aankomst" \ "actual").get.as[DateTime]),
+        melding = (json \ "melding").asOpt[Melding],
+        reisDeel = (json \ "reisDeel").get.as[Seq[ReisDeel]],
+        vertrekVertraging = (json \ "vertrekVertraging").get.asOpt[String],
+        status = (json \ "status").get.as[String],
+        request = (json \ "request").get.as[AdviceRequest]
+      ))
     }
   }
 }

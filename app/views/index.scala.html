@@ -2,9 +2,9 @@
 
 @main("NSAPI") {
 
-    <a href="/api/stations">Stations</a><br>
-    <a href="/api/advices?from=KBW&to=ASD">Advices</a><br>
-    <a href="/api/advices/future?from=KBW&to=ASD">Advices Future</a><br>
-    <a href="/api/advices/first?from=KBW&to=ASD">Advices First</a>
+    <a href="@routes.Api.stations">Stations</a><br>
+    <a href="@routes.Api.advices("KBW", "ASD")">Advices</a><br>
+    <a href="@routes.Api.advicesFuture("KBW", "ASD")">Advices Future</a><br>
+    <a href="@routes.Api.adviceFirstPossible("KBW", "ASD")">Advices First</a>
 
 }
