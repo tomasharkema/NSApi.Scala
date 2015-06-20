@@ -1,9 +1,11 @@
 package actor
 
 import akka.actor.{Props, ActorLogging, Actor}
+import com.notnoop.apns.APNS
 import play.api.{Play, Logger}
 import play.api.libs.ws.{WSAuthScheme, WS}
 import play.api.Play.current
+import settings.Settings
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
@@ -13,8 +15,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object NotifyActor {
   def props = Props[NotifyActor]
 
-  case class Email(emailaddress: String, subject: String, message: String)
-  case class Push(uuid: String, title: String, message: String)
+  case class EmailNotification(emailaddress: String, subject: String, message: String)
+  case class PushNotification(uuid: String, title: String, message: String)
+}
+
+object Push {
+  val ApnsService = APNS.newService.withCert(Settings.ApnsCertLocation, Settings.ApnsCertPass)
+    .withSandboxDestination.build
 }
 
 class NotifyActor extends Actor with ActorLogging {
@@ -32,9 +39,17 @@ class NotifyActor extends Actor with ActorLogging {
       .post(Map("to" -> Seq(email), "from" -> Seq("tomas@harkema.in"), "subject" -> Seq(subject), "text" -> Seq(message)))
   }
 
+  private def push(uuid: String, title: String, message: String) = {
+    val payload = APNS.newPayload.alertBody(message).badge(1).sound("default").build()
+    Push.ApnsService.push(uuid, payload)
+  }
+
   def receive = {
-    case Email(emailaddress, subject, message) =>
+    case EmailNotification(emailaddress, subject, message) =>
       Logger.info("Notify user " + emailaddress + " " + subject + " " + message)
       email(emailaddress, subject, message).map(res => Logger.info("Email to " + emailaddress + " " + res))
+    case PushNotification(uuid, title, message) =>
+      Logger.info("Push user " + uuid + " " + title + " " + message)
+      push(uuid, title, message)
   }
 }

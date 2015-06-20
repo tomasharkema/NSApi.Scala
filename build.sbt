@@ -23,7 +23,8 @@ routesGenerator := InjectedRoutesGenerator
 libraryDependencies ++= Seq(
   "com.netaporter" %% "scala-uri" % "0.4.6",
   "org.scalaj" %% "scalaj-http" % "1.1.4",
-  "org.reactivemongo" %% "reactivemongo" % "0.10.5.0.akka23"
+  "org.reactivemongo" %% "reactivemongo" % "0.10.5.0.akka23",
+  "com.notnoop.apns" % "apns" % "0.1.6"
   //"org.reactivemongo" %% "play2-reactivemongo" % "0.11.0-SNAPSHOT"
 )
 

@@ -48,8 +48,7 @@ object Melding {
     override def writes(melding: Melding): JsValue = {
       Json.obj(
         "id" -> melding.id,
-        "ernstig" -> melding.ernstig,
-        "text" -> melding.text
+        "ernstig" -> melding.ernstig, "text" -> melding.text
       )
     }
   }

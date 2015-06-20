@@ -1,7 +1,7 @@
 package controllers
 
 import actor.NotifyActor
-import actor.NotifyActor.{Push, Email}
+import actor.NotifyActor._
 import api.{Advice, NSApi}
 import connection.Connection
 import org.joda.time.DateTime
@@ -26,9 +26,7 @@ case object NoUpdateNeeded extends Updateable
 object NotificationType extends Enumeration {
   val PushNotification = Value("PUSH")
   val EmailNotification = Value("EMAIL")
-}//(value: String)
-//case object PushNotification extends NotificationType("PUSH")
-//case object EmailNotification extends NotificationType("EMAIL")
+}
 
 object Notifier {
   val collectionUUID = Connection.getCollection("users_uuid")
@@ -102,9 +100,9 @@ object Notifier {
 
     getNotificationTypesForUser(user).map(_.map {
       case (NotificationType.EmailNotification, email) =>
-        Email(email, "Notification", advice.statusString)
+        EmailNotification(email, "Notification", advice.statusString)
       case (NotificationType.PushNotification, pushToken) =>
-        Push(pushToken, "Notification", advice.statusString)
+        PushNotification(pushToken, "Notification", advice.statusString)
     }.map(notifyActor ! _))
   }
 
@@ -140,7 +138,7 @@ object Notifier {
               users.foreach(notifyUser(advice, _))
             case _ =>
               Logger.debug("No update needed for " + advice.request + " " + advice.vertrekVertraging)
-              //users.foreach(notifyUser(advice, _))
+//              users.foreach(notifyUser(advice, _))
           }
         })
       }

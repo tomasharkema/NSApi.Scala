@@ -1,11 +1,16 @@
+import java.io.{File, FileOutputStream}
+
 import _root_.actor.PushActor
+import play.api.libs.ws.WS
+import settings.Settings
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import play.api.Application
-import play.api.GlobalSettings
-import play.api.Logger
+import play.api.{Play, Application, GlobalSettings, Logger}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.concurrent.Akka
 import akka.actor.Props
+import play.api.libs.iteratee._
+import play.api.Play.current
 
 /**
  * Created by tomas on 14-06-15.
@@ -18,6 +23,36 @@ object Global extends GlobalSettings {
       case play.api.Mode.Test => // do not schedule anything for Test
       case _ => pushDaemon(app)
     }
+
+    downloadApns()
+  }
+
+  private def downloadApns() = {
+
+    val file = new File(Settings.ApnsCertLocation)
+
+    val futureResponse = WS.url(Settings.ApnsCertUrl)
+      .getStream()
+
+    val downloadedFile: Future[File] = futureResponse.flatMap {
+      case (headers, body) =>
+        val outputStream = new FileOutputStream(file)
+
+        // The iteratee that writes to the output stream
+        val iteratee = Iteratee.foreach[Array[Byte]] { bytes =>
+          outputStream.write(bytes)
+        }
+
+        // Feed the body into the iteratee
+        (body |>>> iteratee).andThen {
+          case result =>
+            // Close the output stream whether there was an error or not
+            outputStream.close()
+            // Get the result or rethrow the error
+            result.get
+        }.map(_ => file)
+    }
+    downloadedFile
   }
 
   def pushDaemon(app: Application) = {
