@@ -23,11 +23,11 @@ object Search {
     val smallQuery = query.toLowerCase
 
     stations.map{ station =>
-      val equalIndex = station.names.lang.toLowerCase.equals(query.toLowerCase) ||
-        station.names.middel.toLowerCase.equals(query.toLowerCase) ||
-        station.names.kort.toLowerCase.equals(query.toLowerCase) ||
-        station.synoniemen.exists(_.toLowerCase.equals(query.toLowerCase)) ||
-        station.code.toLowerCase.equals(query.toLowerCase)
+      val equalIndex = station.names.lang.equalsIgnoreCase(query) ||
+        station.names.middel.equalsIgnoreCase(query) ||
+        station.names.kort.equalsIgnoreCase(query) ||
+        station.synoniemen.exists(_.equalsIgnoreCase(query)) ||
+        station.code.equalsIgnoreCase(query)
 
       val index = if (station.code.equals(query) || equalIndex)
         if (station.name.equals(query)) 1000.0 else 100.0
