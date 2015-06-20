@@ -1,5 +1,6 @@
 import api.{Advice, Station}
 import controllers.routes
+import global.Global
 import org.joda.time.DateTime
 import org.specs2.mutable._
 import org.specs2.runner._
@@ -67,7 +68,7 @@ class ApiTest extends Specification {
 
   "Search Api" should {
     "give right stations for queryies" in new WithApplication {
-      val req = FakeRequest(GET, controllers.routes.Api.search("den bosch").url)
+      val req = FakeRequest(GET, controllers.routes.Api.search("'s-Hertogenbosch").url)
 
       val Some(result) = route(req)
       status(result) must equalTo(OK)
@@ -78,9 +79,10 @@ class ApiTest extends Specification {
       content must contain("stations")
       val responseNode = Json.parse(contentAsString(result))
 
-      val stations = (responseNode \ "stations").get.as[Seq[Station]]
-
-      stations must have length(2)
+      val stations = (responseNode \ "stations").get.as[Seq[JsValue]].map { obj =>
+        (obj \ "station").as[Station]
+      }
+      stations must have length greaterThan(0)
     }
   }
 }

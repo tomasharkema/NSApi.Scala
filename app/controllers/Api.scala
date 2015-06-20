@@ -77,9 +77,17 @@ class Api extends Controller {
   }
 
   def search(query: String) = Action.async {
-
     for {
       stations <- Search.stations(query, Global.stationsCache)
-    } yield Ok(Json.obj("q" -> query, "stations" -> Json.toJson(stations)))
+    } yield
+      Ok(
+        Json.obj(
+          "q" -> query,
+          "stations" -> Json.toJson(stations.map {
+            case (index, station) =>
+              Json.obj("index" -> index, "station" -> station)
+          })
+        )
+      )
   }
 }
