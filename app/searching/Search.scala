@@ -1,6 +1,7 @@
 package searching
 
 import actor.SearchActor.StationSearch
+import actor.SearchActor.StationLocationSearch
 import actor.{SearchActor, NotifyActor}
 import akka.actor.Props
 import akka.util.Timeout
@@ -8,7 +9,7 @@ import api.Station
 import play.libs.Akka
 import akka.pattern.ask
 import akka.util.Timeout
-import utils.SearchUtils
+import utils.{LatLngUtils, SearchUtils}
 import utils.SeqUtils._
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.Future
@@ -51,9 +52,27 @@ object Search {
     }.filter(_._1 > 0.1).sortBy(_._1).reverse
   }
 
+  def searchStations(lat: Double, lon: Double, stations: Seq[Station]) = {
+    stations.map { station =>
+      val distance = LatLngUtils.distFrom(lat, lon, station.coords.lat, station.coords.lon)
+
+      (distance, station)
+    }
+      .sortBy(_._1).take(20)
+  }
+
   def stations(query: String, stations: Seq[Station]): Future[Seq[(Double, Station)]] = {
     ask(searchActor, StationSearch(query, stations)).map {
       case seq: Seq[(Double, Station)] =>
+        seq
+      case _ =>
+        List()
+    }
+  }
+
+  def stations(lat: Double, lon: Double, stations: Seq[Station]): Future[Seq[(Float, Station)]] = {
+    ask(searchActor, StationLocationSearch(lat, lon, stations)).map {
+      case seq: Seq[(Float, Station)] =>
         seq
       case _ =>
         List()

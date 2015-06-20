@@ -90,4 +90,17 @@ class Api extends Controller {
         )
       )
   }
+
+  def searchNearest(lat: Double, lon: Double) = Action.async {
+    for {
+      stations <- Search.stations(lat, lon, Global.stationsCache)
+    } yield Ok(Json.obj(
+      "lat" -> lat,
+      "lon" -> lon,
+      "stations" -> Json.toJson(stations.map {
+        case (index, station) =>
+          Json.obj("distance" -> index, "station" -> station)
+      })
+    ))
+  }
 }
