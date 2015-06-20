@@ -29,11 +29,8 @@ object Global extends GlobalSettings {
       case play.api.Mode.Test => // do not schedule anything for Test
       case _ => pushDaemon(app)
     }
-    println("Download APNS File")
-    downloadApns().onComplete { file =>
-      println("Download APNS File completed")
-    }
 
+    downloadApns()
     stationsCache = Await.result(NSApi.stations, 10 seconds)
   }
 
