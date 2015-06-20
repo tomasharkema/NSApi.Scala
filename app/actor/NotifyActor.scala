@@ -1,7 +1,11 @@
 package actor
 
+import java.net.NetworkInterface
+
+import akka.actor.Status.Failure
 import akka.actor.{Props, ActorLogging, Actor}
 import com.notnoop.apns.APNS
+import com.notnoop.exceptions.NetworkIOException
 import play.api.{Play, Logger}
 import play.api.libs.ws.{WSAuthScheme, WS}
 import play.api.Play.current
@@ -20,8 +24,15 @@ object NotifyActor {
 }
 
 object Push {
-  val ApnsService = APNS.newService.withCert(Settings.ApnsCertLocation, Settings.ApnsCertPass)
-    .withSandboxDestination.build
+  val ApnsService = {
+    if (Settings.Environment == "PROD") {
+      APNS.newService.withCert(Settings.ApnsCertLocation, Settings.ApnsCertPass)
+        .withProductionDestination.build
+    } else {
+      APNS.newService.withCert(Settings.ApnsCertLocation, Settings.ApnsCertPass)
+        .withSandboxDestination.build
+    }
+  }
 }
 
 class NotifyActor extends Actor with ActorLogging {
@@ -39,6 +50,7 @@ class NotifyActor extends Actor with ActorLogging {
       .post(Map("to" -> Seq(email), "from" -> Seq("tomas@harkema.in"), "subject" -> Seq(subject), "text" -> Seq(message)))
   }
 
+  @throws(classOf[NetworkIOException])
   private def push(uuid: String, title: String, message: String) = {
     val payload = APNS.newPayload.alertBody(message).badge(1).sound("default").build()
     Push.ApnsService.push(uuid, payload)
@@ -50,6 +62,14 @@ class NotifyActor extends Actor with ActorLogging {
       email(emailaddress, subject, message).map(res => Logger.info("Email to " + emailaddress + " " + res))
     case PushNotification(uuid, title, message) =>
       Logger.info("Push user " + uuid + " " + title + " " + message)
-      push(uuid, title, message)
+      try {
+        val result = push(uuid, title, message)
+        sender() ! result
+      } catch {
+        case e: Exception =>
+          sender() ! Failure(e)
+          println(e)
+          throw e
+      }
   }
 }
