@@ -2,6 +2,7 @@ package controllers
 
 import actor.NotifyActor
 import actor.NotifyActor._
+import akka.util.Timeout
 import api.{Advice, NSApi}
 import connection.Connection
 import org.joda.time.DateTime
@@ -13,7 +14,9 @@ import reactivemongo.bson.BSONDocument
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import akka.actor._
+import akka.pattern.{ ask, pipe }
 
+import scala.concurrent.duration.DurationInt
 /**
  * Created by tomas on 14-06-15.
  */
@@ -33,6 +36,8 @@ object Notifier {
   val collectionStations = Connection.getCollection("users_stations")
   val collectionAdvices = Connection.getCollection("advices")
   val notifyActor = Akka.system.actorOf(Props[NotifyActor], name = "notify-actor")
+
+  implicit val timeout = Timeout(5 seconds)
 
   def registerUUID(user: String, registerType: String,  uuid: String) = {
     val newDoc = BSONDocument(
@@ -86,11 +91,11 @@ object Notifier {
       val notTypeString = doc.getAs[String]("type")
       val uuidString = doc.getAs[String]("uuid")
 
-      if (notTypeString.isDefined && uuidString.isDefined) {
-        val notType = NotificationType.withName(notTypeString.get)
-        Some(notType, uuidString.get)
-      } else {
-        None
+      (notTypeString, uuidString) match {
+        case (notType, uuid) =>
+          Some(NotificationType.withName(notType.get), uuid.get)
+        case (_, _) =>
+          None
       }
     }.filter(_.isDefined).flatten)
   }
@@ -103,7 +108,7 @@ object Notifier {
         EmailNotification(email, "Notification", advice.statusString)
       case (NotificationType.PushNotification, pushToken) =>
         PushNotification(pushToken, "Notification", advice.statusString)
-    }.map(notifyActor ! _))
+    }).map(ask(notifyActor, _))
   }
 
   private def updateIfNeeded(advice: Advice): Future[Updateable] = {

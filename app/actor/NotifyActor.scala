@@ -4,6 +4,7 @@ import java.net.NetworkInterface
 
 import akka.actor.Status.Failure
 import akka.actor.{Props, ActorLogging, Actor}
+import akka.util.Timeout
 import com.notnoop.apns.APNS
 import com.notnoop.exceptions.NetworkIOException
 import play.api.{Play, Logger}
@@ -59,7 +60,7 @@ class NotifyActor extends Actor with ActorLogging {
   def receive = {
     case EmailNotification(emailaddress, subject, message) =>
       Logger.info("Notify user " + emailaddress + " " + subject + " " + message)
-      email(emailaddress, subject, message).map(res => Logger.info("Email to " + emailaddress + " " + res))
+      sender() ! email(emailaddress, subject, message).map(res => Logger.info("Email to " + emailaddress + " " + res))
     case PushNotification(uuid, title, message) =>
       Logger.info("Push user " + uuid + " " + title + " " + message)
       try {
