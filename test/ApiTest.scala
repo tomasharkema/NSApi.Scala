@@ -1,5 +1,6 @@
-import api.Station
+import api.{Advice, Station}
 import controllers.routes
+import org.joda.time.DateTime
 import org.specs2.mutable._
 import org.specs2.runner._
 import org.junit.runner._
@@ -12,7 +13,7 @@ import play.api.libs.json._
 /**
  * Created by tomas on 17-06-15.
  */
-//@RunWith(classOf[JUnitRunner])
+@RunWith(classOf[JUnitRunner])
 class ApiTest extends Specification {
 
   "Api" should {
@@ -31,7 +32,6 @@ class ApiTest extends Specification {
       val responseNode = Json.parse(contentAsString(result))
       val stations = (responseNode \ "stations").as[JsArray].value
       stations.size must greaterThan(1)
-
       (stations.head \ "name").get.as[String] must equalTo("\'s-Hertogenbosch")
       (stations.head \ "code").get.as[String] must equalTo("HT")
       (stations.head \ "land").get.as[String] must equalTo("NL")
@@ -54,6 +54,14 @@ class ApiTest extends Specification {
 
       val responseNode = Json.parse(contentAsString(result))
       (responseNode \ "count").as[Int] must greaterThan(1)
+      val advices = (responseNode \ "advices").get.as[Seq[Advice]]
+
+      advices.map { advice =>
+        advice.overstappen must greaterThanOrEqualTo(0)
+        advice.vertrek.planned.getMillis must lessThanOrEqualTo(advice.vertrek.actual.getMillis)
+        advice.aankomst.planned.getMillis must lessThanOrEqualTo(advice.aankomst.actual.getMillis)
+        advice.vertrek.planned.getMillis must lessThan(advice.aankomst.planned.getMillis)
+      }
     }
   }
 }
