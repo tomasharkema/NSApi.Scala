@@ -1,11 +1,13 @@
 package controllers
 
 import api.{Station, NSApi}
+import global.Global
 import play.api.libs.json.Json
 import play.api.mvc._
 
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import searching.Search
 
 import scala.concurrent.Future
 
@@ -13,16 +15,15 @@ import scala.concurrent.Future
  * Created by tomas on 10-06-15.
  */
 class Api extends Controller {
-  def stations = Action.async { implicit request =>
-    NSApi.stations.map { stations =>
-      val stationsJson = stations.map { station =>
-        Json.toJson(station)
-      }
 
-      Ok(Json.obj(
-        "stations" -> Json.toJson(stationsJson)
-      ))
+  def stations = Action {
+    val stationsJson = Global.stationsCache.map { station =>
+      Json.toJson(station)
     }
+
+    Ok(Json.obj(
+      "stations" -> Json.toJson(stationsJson)
+    ))
   }
 
   def advices(from: String, to: String) = Action.async {
@@ -73,5 +74,12 @@ class Api extends Controller {
     Notifier.registerUUID(user, registerType, uuid).map { res =>
       Ok(Json.obj("success" -> res.ok))
     }
+  }
+
+  def search(query: String) = Action.async {
+
+    for {
+      stations <- Search.stations(query, Global.stationsCache)
+    } yield Ok(Json.obj("q" -> query, "stations" -> Json.toJson(stations)))
   }
 }

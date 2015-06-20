@@ -64,4 +64,23 @@ class ApiTest extends Specification {
       }
     }
   }
+
+  "Search Api" should {
+    "give right stations for queryies" in new WithApplication {
+      val req = FakeRequest(GET, controllers.routes.Api.search("den bosch").url)
+
+      val Some(result) = route(req)
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      charset(result) must beSome("utf-8")
+      val content = contentAsString(result)
+
+      content must contain("stations")
+      val responseNode = Json.parse(contentAsString(result))
+
+      val stations = (responseNode \ "stations").get.as[Seq[Station]]
+
+      stations must have length(2)
+    }
+  }
 }

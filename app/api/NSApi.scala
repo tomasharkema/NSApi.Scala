@@ -31,9 +31,9 @@ object NSApi {
   private def parse(res: HttpResponse[String]) = XML.loadString(res.body)
 
   def stations: Future[Seq[Station]] =
-    nsRequest(StationsUrl).get().map { response =>
-      (response.xml \\ "Station").map(Station.parseStation)
-    }
+        nsRequest(StationsUrl).get().map { response =>
+          (response.xml \\ "Station").map(Station.parseStation)
+        }
 
   def advices(from: String, to: String): Future[Seq[Advice]] = {
     nsRequest(TreinPlannerUrl).withQueryString("fromStation" -> from, "toStation" -> to).get().map{ response =>

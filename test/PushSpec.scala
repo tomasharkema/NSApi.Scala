@@ -7,7 +7,7 @@ import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import play.api.test.WithApplication
 import play.libs.Akka
-import akka.pattern.{ ask, pipe }
+import akka.pattern.ask
 import scala.concurrent.duration.DurationInt
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
