@@ -27,3 +27,4 @@ project/plugins/project/
 .sbtserver
 
 nsapi.conf
+apns-cert.p12
