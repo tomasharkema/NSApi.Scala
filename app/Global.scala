@@ -23,8 +23,10 @@ object Global extends GlobalSettings {
       case play.api.Mode.Test => // do not schedule anything for Test
       case _ => pushDaemon(app)
     }
-
-    downloadApns()
+    println("Download APNS File")
+    downloadApns().onComplete { file =>
+      println("Download APNS File completed")
+    }
   }
 
   private def downloadApns() = {
