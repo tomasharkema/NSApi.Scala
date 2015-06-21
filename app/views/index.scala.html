@@ -1,4 +1,4 @@
-@(message: String)
+@(message: String)(implicit req: RequestHeader)
 
 @main("NSAPI") {
 
@@ -7,6 +7,7 @@
     <a href="@routes.Api.advicesFuture("KBW", "ASD")">Advices Future</a><br>
     <a href="@routes.Api.adviceFirstPossible("KBW", "ASD")">Advices First</a><br>
     <a href="@routes.Api.search("'s-Hertogenbosch")">Search</a><br>
+    <a href="@routes.Application.search">Search page</a><br>
     <a href="@routes.Api.searchNearest(52.3770998, 4.9273675)">Search Nearest</a><br>
 
 }
