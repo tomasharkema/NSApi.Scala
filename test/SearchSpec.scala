@@ -16,7 +16,7 @@ class SearchSpec extends Specification {
       stations must have length greaterThan(0)
 
       for (station <- stations) {
-        searchStations(station.name, stations).head._2.name must be equalTo(station.name)
+        searchStations(station.name, stations).head._2.name must be equalTo station.name
       }
     }
 
@@ -29,7 +29,7 @@ class SearchSpec extends Specification {
         if (station.synonyms.nonEmpty) {
           for (synoniem <- station.synonyms) {
             val station = searchStations(synoniem, stations).head._2
-            station.synonyms must be contain synoniem or (station.name must be equalTo(synoniem))
+            station.synonyms must be contain synoniem or (station.name must be equalTo synoniem)
           }
         }
       }
@@ -42,7 +42,7 @@ class SearchSpec extends Specification {
 
       for (station <- stations) {
         val stationHead = searchStations(station.code, stations).head._2
-        stationHead.code must be equalTo(station.code)
+        stationHead.code must be equalTo station.code
       }
     }
   }

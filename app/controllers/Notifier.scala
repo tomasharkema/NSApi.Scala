@@ -71,7 +71,7 @@ object Notifier {
     collectionStations.update(newDoc, updateDoc, upsert = true)
   }
 
-  private def getStationsAndUsers() = {
+  private def getStationsAndUsers = {
     val cursor = collectionStations.find(BSONDocument()).cursor[BSONDocument]
     val list = cursor.collect[List]()
 
