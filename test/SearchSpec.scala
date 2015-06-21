@@ -1,7 +1,8 @@
-import api.NSApi
+import api.{Station, NSApi}
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
+import play.api.Logger
 import play.api.test.WithApplication
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.Await
@@ -29,7 +30,7 @@ class SearchSpec extends Specification {
         if (station.synonyms.nonEmpty) {
           for (synoniem <- station.synonyms) {
             val station = searchStations(synoniem, stations).head._2
-            station.synonyms must be contain synoniem or (station.name must be equalTo synoniem)
+            station.synonyms must be contain synoniem or (synoniem must be equalTo station.name)
           }
         }
       }
@@ -45,6 +46,28 @@ class SearchSpec extends Specification {
         stationHead.code must be equalTo station.code
       }
     }
+  }
+
+  private def searchForIndex(query: String, comperable: (Station, String) => Boolean, placeInList: Seq[Station] => Int, stations: Seq[Station]): (Int, Int, Option[Seq[Station]]) = {
+    val splitQuery = query.split(" ").flatMap(_.split("-"))
+      //.filter(!_.equals("Hbf"))
+      .toSeq
+
+    var stationName = if (splitQuery.length > 1) splitQuery.sliding(2).map(_.head).toList.mkString(" ") + " " else ""
+
+    var i = 0
+    var place = 0
+    for (char <- splitQuery.last) {
+      i = i+1
+      stationName = stationName + char
+      val stationSearch = searchStations(stationName, stations)
+      if (comperable(stationSearch.head._2, query)) {
+        return (i, place, Some(stationSearch.map(_._2)))
+      }
+      place = placeInList(stationSearch.map(_._2))
+    }
+    Logger.error("None found for " + query + ". Last query was " + stationName)
+    (-1, -1, None)
   }
 
   "Station Location Search" should {
@@ -82,6 +105,42 @@ class SearchSpec extends Specification {
         val stationSearch = searchStations(station.coords.lat, station.coords.lon, stations)
         stationSearch.head._2.coords.lat must be equalTo station.coords.lat
         stationSearch.head._2.coords.lon must be equalTo station.coords.lon
+      }
+    }
+
+    "get the designated station in less than 0.75 times the keystrokes of the length of the name, or when not, it must be in the top 5" in new WithApplication() {
+      val stations = Await.result(NSApi.stations, 10 seconds).filter(_.code != "BUENDE")
+      stations must have length greaterThan(0)
+
+      for (station <- stations) {
+
+        val searchQueries = Seq(
+          Seq(
+            station.names.long,
+            station.names.middle,
+            station.names.short
+          ),
+          station.synonyms
+        ).flatten
+
+        for (query <- searchQueries) {
+          val (index, prevPlace, Some(foundStations)) = searchForIndex(query, {
+            case (s: Station, q: String) =>
+              s.equals(station)
+          }, _.indexOf(station), stations)
+
+          index must be greaterThan 0
+
+          val length = station.name.length.asInstanceOf[Double]
+          val indexDouble = index.asInstanceOf[Double]
+
+          if (indexDouble < length * 0.75) {
+            indexDouble must be lessThan (station.name.length.asInstanceOf[Double] * 0.75)
+          } else {
+            Logger.warn("Aware: " + station.name + " by " + query + " has been found very late (" + index + ":" + length + "), but was previously found on index " + prevPlace)
+            prevPlace must be lessThan 2
+          }
+        }
       }
     }
   }

@@ -12,7 +12,7 @@ $(function(){
         var html = "";
 
         res.stations.forEach(function(item) {
-          html += item.station.name + "<br>"
+          html += item.station.name + ": " + item.index + "<br>"
         });
 
         $("#results").html(html);

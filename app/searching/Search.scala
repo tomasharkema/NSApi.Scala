@@ -20,30 +20,40 @@ object Search {
 
   val searchActor = Akka.system.actorOf(Props[SearchActor], name = "search-actor")
 
-  def searchStations(query: String, stations: Seq[Station]) = {
+  def searchStations(query: String, stations: Seq[Station]): Seq[(Double, Station)] = {
+    if (query == "") {
+      return Seq()
+    }
+
     val smallQuery = query.toLowerCase
 
     stations.map{ station =>
-      val equalIndex = station.names.long.equalsIgnoreCase(query) ||
-        station.names.middle.equalsIgnoreCase(query) ||
-        station.names.short.equalsIgnoreCase(query) ||
-        station.synonyms.exists(_.equalsIgnoreCase(query)) ||
-        station.code.equalsIgnoreCase(query)
+      val comparables = Seq(
+        Seq(
+          station.names.long,
+          station.names.middle,
+          station.names.short
+        ),
+        station.synonyms
+      ).flatten.map(_.replaceAll("-", " ").toLowerCase)
 
-      val index = if (station.code.equals(query) || equalIndex)
-        if (station.name.equals(query)) 1000.0 else 100.0
+      val somethingEquals = comparables.map(_.equalsIgnoreCase(query)).exists(b => b)
+
+      val index = if (station.code.equals(query) || somethingEquals)
+        if (station.name.equalsIgnoreCase(query)) 1000.0 else 150.0
       else {
-        val containingIndex = if(station.names.long.toLowerCase.contains(query.toLowerCase) ||
-          station.names.middle.toLowerCase.contains(query.toLowerCase) ||
-          station.names.short.toLowerCase.contains(query.toLowerCase) ||
-          station.synonyms.exists(_.toLowerCase.contains(query.toLowerCase)) ||
-          station.code.toLowerCase.contains(query.toLowerCase)) 100.0 else .0
+
+        val containingIndex = if(comparables.map(_.contains(query)).exists(b => b)) 100.0 else .0
+        val startsWithIndex = if (comparables.map(_.startsWith(smallQuery)).exists(b => b)) 10.0 else 0.0
 
         average(Seq(
-          Seq(containingIndex),
-          Seq(SearchUtils.similarity(smallQuery, station.names.long.toLowerCase)),
-          Seq(SearchUtils.similarity(smallQuery, station.names.middle.toLowerCase)),
-          Seq(SearchUtils.similarity(smallQuery, station.names.short.toLowerCase)),
+          Seq(
+            startsWithIndex,
+            containingIndex,
+            SearchUtils.similarity(smallQuery, station.names.long.toLowerCase),
+            SearchUtils.similarity(smallQuery, station.names.middle.toLowerCase),
+            SearchUtils.similarity(smallQuery, station.names.short.toLowerCase)
+          ),
           station.synonyms.map(synoniem => SearchUtils.similarity(smallQuery, synoniem.toLowerCase)).filter(_ != 0)
         ).flatten)
       }

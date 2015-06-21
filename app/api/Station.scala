@@ -54,6 +54,7 @@ object LatLng {
 }
 
 case class Station(code: String,
+                   stationType: String,
                    names: Names,
                    land: String,
                    UICCode: String,
@@ -66,6 +67,7 @@ object Station {
   def parseStation(el: Node) = {
     Station(
       (el \ "Code").text,
+      (el \ "Type").text,
       Names.parseNames(el \ "Namen"),
       (el \ "Land").text,
       (el \ "UICCode").text,
@@ -78,6 +80,7 @@ object Station {
     override def writes(station: Station): JsValue = {
       Json.obj(
         "name" -> station.names.long,
+        "type" -> station.stationType,
         "names" -> Json.toJson(station.names),
         "uiccode" -> station.UICCode,
         "code" -> station.code,
@@ -90,6 +93,7 @@ object Station {
 
   implicit val readsStation: Reads[Station] = (
     (JsPath \ "code").read[String] and
+      (JsPath \ "type").read[String] and
       (JsPath \ "names").read[Names] and
       (JsPath \ "land").read[String] and
       (JsPath \ "uiccode").read[String] and

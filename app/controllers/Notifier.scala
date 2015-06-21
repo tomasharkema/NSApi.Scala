@@ -131,7 +131,7 @@ object Notifier {
 
   // make this more modular without side-effects
   def notifyUsers() = {
-    getStationsAndUsers().map { sauFuture =>
+    getStationsAndUsers.map { sauFuture =>
       sauFuture.foreach { sau =>
         val stations = sau._1
         val users = sau._2
