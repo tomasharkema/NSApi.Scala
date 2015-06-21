@@ -1,11 +1,13 @@
 package controllers
 
+import javax.inject.Inject
+
 import api.{Station, NSApi}
 import global.Global
 import play.api.libs.json.Json
 import play.api.mvc._
 
-import play.api.cache.Cache
+import play.api.cache._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import searching.Search
 
@@ -14,16 +16,18 @@ import scala.concurrent.Future
 /**
  * Created by tomas on 10-06-15.
  */
-class Api extends Controller {
+class Api @Inject() (cached: Cached) extends Controller {
 
-  def stations = Action {
-    val stationsJson = Global.stationsCache.map { station =>
-      Json.toJson(station)
+  def stations = cached("stations") {
+    Action {
+      val stationsJson = Global.stationsCache.map { station =>
+        Json.toJson(station)
+      }
+
+      Ok(Json.obj(
+        "stations" -> Json.toJson(stationsJson)
+      ))
     }
-
-    Ok(Json.obj(
-      "stations" -> Json.toJson(stationsJson)
-    ))
   }
 
   def advices(from: String, to: String) = Action.async {
@@ -76,10 +80,11 @@ class Api extends Controller {
     }
   }
 
-  def search(query: String) = Action.async {
-    for {
-      stations <- Search.stations(query, Global.stationsCache)
-    } yield
+  def search(query: String) = cached("search." + query) {
+    Action.async {
+      for {
+        stations <- Search.stations(query, Global.stationsCache)
+      } yield
       Ok(
         Json.obj(
           "q" -> query,
@@ -89,18 +94,21 @@ class Api extends Controller {
           })
         )
       )
+    }
   }
 
-  def searchNearest(lat: Double, lon: Double) = Action.async {
-    for {
-      stations <- Search.stations(lat, lon, Global.stationsCache)
-    } yield Ok(Json.obj(
-      "lat" -> lat,
-      "lon" -> lon,
-      "stations" -> Json.toJson(stations.map {
-        case (index, station) =>
-          Json.obj("distance" -> index, "station" -> station)
-      })
-    ))
+  def searchNearest(lat: Double, lon: Double) = cached("search." + lat + ":" + lon) {
+    Action.async {
+      for {
+        stations <- Search.stations(lat, lon, Global.stationsCache)
+      } yield Ok(Json.obj(
+        "lat" -> lat,
+        "lon" -> lon,
+        "stations" -> Json.toJson(stations.map {
+          case (index, station) =>
+            Json.obj("distance" -> index, "station" -> station)
+        })
+      ))
+    }
   }
 }
