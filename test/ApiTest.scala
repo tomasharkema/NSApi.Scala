@@ -31,14 +31,16 @@ class ApiTest extends Specification {
       content must contain("stations")
 
       val responseNode = Json.parse(contentAsString(result))
-      val stations = (responseNode \ "stations").as[JsArray].value
+      val stations = (responseNode \ "stations").get.as[Seq[Station]]
       stations.size must greaterThan(1)
-      (stations.head \ "name").get.as[String] must equalTo("\'s-Hertogenbosch")
-      (stations.head \ "code").get.as[String] must equalTo("HT")
-      (stations.head \ "land").get.as[String] must equalTo("NL")
-      (stations.head \ "coords" \ "lat").get.as[Double] must equalTo(51.69048)
-      (stations.head \ "coords" \ "lon").get.as[Double] must equalTo(5.29362)
-      (stations.head \ "synoniemen").get.as[JsArray].head.get.as[String] must equalTo("Hertogenbosch (\'s)")
+      val station = stations.head
+
+      station.name must equalTo("\'s-Hertogenbosch")
+      station.code must equalTo("HT")
+      station.land must equalTo("NL")
+      station.coords.lat must equalTo(51.69048)
+      station.coords.lon must equalTo(5.29362)
+      station.synonyms.head must equalTo("Hertogenbosch (\'s)")
     }
 
     "should give advice" in new WithApplication {
@@ -83,6 +85,7 @@ class ApiTest extends Specification {
         (obj \ "station").as[Station]
       }
       stations must have length greaterThan(0)
+      stations.head.code must be equalTo "HT"
     }
   }
 }

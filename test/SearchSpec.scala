@@ -26,10 +26,10 @@ class SearchSpec extends Specification {
       stations must have length greaterThan(0)
 
       for (station <- stations) {
-        if (station.synoniemen.nonEmpty) {
-          for (synoniem <- station.synoniemen) {
+        if (station.synonyms.nonEmpty) {
+          for (synoniem <- station.synonyms) {
             val station = searchStations(synoniem, stations).head._2
-            station.synoniemen must be contain synoniem or (station.name must be equalTo(synoniem))
+            station.synonyms must be contain synoniem or (station.name must be equalTo(synoniem))
           }
         }
       }

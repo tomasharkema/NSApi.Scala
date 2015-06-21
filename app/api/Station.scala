@@ -10,28 +10,28 @@ import play.api.libs.functional.syntax._
  * Created by tomas on 10-06-15.
  */
 
-case class Namen(kort: String, middel: String, lang: String)
+case class Names(short: String, middle: String, long: String)
 
-object Namen {
-  def parseNamen(el: NodeSeq) = {
-    Namen((el \ "Kort").text, (el \ "Middel").text, (el \ "Lang").text)
+object Names {
+  def parseNames(el: NodeSeq) = {
+    Names((el \ "Kort").text, (el \ "Middel").text, (el \ "Lang").text)
   }
 
-  implicit val writesNamen: Writes[Namen] = new Writes[Namen] {
-    override def writes(namen: Namen): JsValue = {
+  implicit val writesNames: Writes[Names] = new Writes[Names] {
+    override def writes(names: Names): JsValue = {
       Json.obj(
-        "kort" -> namen.kort,
-        "middel" -> namen.middel,
-        "lang" -> namen.lang
+        "short" -> names.short,
+        "middle" -> names.middle,
+        "long" -> names.long
       )
     }
   }
 
-  implicit val readsNamen: Reads[Namen] = (
-    (JsPath \ "kort").read[String] and
-      (JsPath \ "middel").read[String] and
-      (JsPath \ "lang").read[String]
-    )(Namen.apply _)
+  implicit val readsNames: Reads[Names] = (
+    (JsPath \ "short").read[String] and
+      (JsPath \ "middle").read[String] and
+      (JsPath \ "long").read[String]
+    )(Names.apply _)
 }
 
 case class LatLng(lat: Double, lon: Double)
@@ -54,19 +54,19 @@ object LatLng {
 }
 
 case class Station(code: String,
-                   names: Namen,
+                   names: Names,
                    land: String,
                    UICCode: String,
                    coords: LatLng,
-                   synoniemen: Seq[String]) {
-  val name = names.lang
+                   synonyms: Seq[String]) {
+  val name = names.long
 }
 
 object Station {
   def parseStation(el: Node) = {
     Station(
       (el \ "Code").text,
-      Namen.parseNamen(el \ "Namen"),
+      Names.parseNames(el \ "Namen"),
       (el \ "Land").text,
       (el \ "UICCode").text,
       LatLng.parseLatLng(el),
@@ -77,23 +77,23 @@ object Station {
   implicit val writesStation: Writes[Station] = new Writes[Station] {
     override def writes(station: Station): JsValue = {
       Json.obj(
-        "name" -> station.names.lang,
+        "name" -> station.names.long,
         "names" -> Json.toJson(station.names),
         "uiccode" -> station.UICCode,
         "code" -> station.code,
         "land" -> station.land,
         "coords" -> Json.toJson(station.coords),
-        "synoniemen" -> Json.toJson(station.synoniemen)
+        "synonyms" -> Json.toJson(station.synonyms)
       )
     }
   }
 
   implicit val readsStation: Reads[Station] = (
     (JsPath \ "code").read[String] and
-      (JsPath \ "names").read[Namen] and
+      (JsPath \ "names").read[Names] and
       (JsPath \ "land").read[String] and
       (JsPath \ "uiccode").read[String] and
       (JsPath \ "coords").read[LatLng] and
-      (JsPath \ "synoniemen").read[Seq[String]]
+      (JsPath \ "synonyms").read[Seq[String]]
     )(Station.apply _)
 }
