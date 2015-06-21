@@ -67,8 +67,7 @@ object Search {
       val distance = LatLngUtils.distFrom(lat, lon, station.coords.lat, station.coords.lon)
 
       (distance, station)
-    }
-      .sortBy(_._1).take(20)
+    }.sortBy(_._1).take(20)
   }
 
   def stations(query: String, stations: Seq[Station]): Future[Seq[(Double, Station)]] = {

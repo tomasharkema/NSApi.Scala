@@ -79,7 +79,7 @@ object Station {
   implicit val writesStation: Writes[Station] = new Writes[Station] {
     override def writes(station: Station): JsValue = {
       Json.obj(
-        "name" -> station.names.long,
+        "name" -> station.name,
         "type" -> station.stationType,
         "names" -> Json.toJson(station.names),
         "uiccode" -> station.UICCode,

@@ -85,15 +85,15 @@ class Api @Inject() (cached: Cached) extends Controller {
       for {
         stations <- Search.stations(query, Global.stationsCache)
       } yield
-      Ok(
-        Json.obj(
-          "q" -> query,
-          "stations" -> Json.toJson(stations.map {
-            case (index, station) =>
-              Json.obj("index" -> index, "station" -> station)
-          })
+        Ok(
+          Json.obj(
+            "q" -> query,
+            "stations" -> Json.toJson(stations.map {
+              case (index, station) =>
+                Json.obj("index" -> index, "station" -> station)
+            })
+          )
         )
-      )
     }
   }
 
@@ -101,14 +101,15 @@ class Api @Inject() (cached: Cached) extends Controller {
     Action.async {
       for {
         stations <- Search.stations(lat, lon, Global.stationsCache)
-      } yield Ok(Json.obj(
-        "lat" -> lat,
-        "lon" -> lon,
-        "stations" -> Json.toJson(stations.map {
-          case (index, station) =>
-            Json.obj("distance" -> index, "station" -> station)
-        })
-      ))
+      } yield
+        Ok(Json.obj(
+          "lat" -> lat,
+          "lon" -> lon,
+          "stations" -> Json.toJson(stations.map {
+            case (index, station) =>
+              Json.obj("distance" -> index, "station" -> station)
+          })
+        ))
     }
   }
 }

@@ -31,15 +31,14 @@ object NSApi {
   private def parse(res: HttpResponse[String]) = XML.loadString(res.body)
 
   def stations: Future[Seq[Station]] =
-        nsRequest(StationsUrl).get().map { response =>
-          (response.xml \\ "Station").map(Station.parseStation)
-        }
+    nsRequest(StationsUrl).get().map { response =>
+      (response.xml \\ "Station").map(Station.parseStation)
+    }
 
-  def advices(from: String, to: String): Future[Seq[Advice]] = {
+  def advices(from: String, to: String): Future[Seq[Advice]] =
     nsRequest(TreinPlannerUrl).withQueryString("fromStation" -> from, "toStation" -> to).get().map{ response =>
       (response.xml \\ "ReisMogelijkheid").map(Advice.parseAdvice(_, from, to))
     }
-  }
 
   def advicesFuture(from: String, to: String) =
     advices(from, to).map(_.filter(_.vertrek.actual.isAfterNow).filter(_.status != "NIET-MOGELIJK"))
