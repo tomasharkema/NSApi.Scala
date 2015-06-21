@@ -1,9 +1,6 @@
 // The Play plugin
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.0")
 
-// intellij plugins
-addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.6.0")
-
 // web plugins
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.0")
