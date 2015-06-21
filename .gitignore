@@ -28,3 +28,4 @@ project/plugins/project/
 
 nsapi.conf
 apns-cert.p12
+*.iml
