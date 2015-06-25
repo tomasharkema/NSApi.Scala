@@ -26,5 +26,13 @@ class ApplicationSpec extends Specification {
       contentType(home) must beSome.which(_ == "text/html")
       contentAsString(home) must contain ("Stations")
     }
+
+    "render the search page" in new WithApplication{
+      val home = route(FakeRequest(GET, "/search")).get
+
+      status(home) must equalTo(OK)
+      contentType(home) must beSome.which(_ == "text/html")
+      contentAsString(home) must contain ("Search")
+    }
   }
 }

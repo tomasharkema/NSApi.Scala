@@ -24,7 +24,8 @@ project/plugins/project/
 .scala_dependencies
 .worksheet
 
-.sbtserver
+.sbtserver*
 
 nsapi.conf
 apns-cert.p12
+*.iml

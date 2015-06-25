@@ -9,9 +9,8 @@ import play.api.Logger
  */
 class PushActor extends Actor {
   def receive = {
-    case _ => {
+    case _ =>
       Logger.debug("Looking for events to notify...")
       Notifier.notifyUsers()
-    }
   }
 }

@@ -3,7 +3,7 @@ package controllers
 import actor.NotifyActor
 import actor.NotifyActor._
 import akka.util.Timeout
-import api.{Advice, NSApi}
+import api.{Station, Advice, NSApi}
 import connection.Connection
 import org.joda.time.DateTime
 import play.api.Logger
@@ -26,9 +26,38 @@ case object New extends Updateable
 case object NeedsUpdate extends Updateable
 case object NoUpdateNeeded extends Updateable
 
-object NotificationType extends Enumeration {
-  val PushNotification = Value("PUSH")
-  val EmailNotification = Value("EMAIL")
+//object NotificationType extends Enumeration {
+//  val PushNotification = Value("PUSH")
+//  val EmailNotification = Value("EMAIL")
+//}
+
+sealed trait NotificationType {
+  val value: String
+}
+
+case object EmailNotification extends NotificationType {
+  val value: String = "EMAIL"
+}
+
+case object PushNotification extends NotificationType {
+  val value: String = "PUSH"
+}
+
+object NotificationType {
+  val values = Seq(EmailNotification, PushNotification)
+
+  def getFromString(string: String): Option[NotificationType] = {
+    values.find(_.value == string)
+  }
+
+  def getFromString(string: Option[String]): Option[NotificationType] = {
+    string match {
+      case Some(opt) =>
+        getFromString(opt)
+      case _ =>
+        None
+    }
+  }
 }
 
 object Notifier {
@@ -39,16 +68,16 @@ object Notifier {
 
   implicit val timeout = Timeout(5 seconds)
 
-  def registerUUID(user: String, registerType: String,  uuid: String) = {
+  def registerUUID(user: String, registerType: NotificationType,  uuid: String) = {
     val newDoc = BSONDocument(
       "name" -> user,
-      "type" -> registerType,
+      "type" -> registerType.value,
       "uuid" -> uuid
     )
 
     val updateDoc = BSONDocument(
       "name" -> user,
-      "type" -> registerType,
+      "type" -> registerType.value,
       "uuid" -> uuid,
       "updated" -> BSONDateTime(DateTime.now().getMillis)
     )
@@ -56,22 +85,22 @@ object Notifier {
     collectionUUID.update(newDoc, updateDoc, upsert = true)
   }
 
-  def registerStation(user: String, from: String, to: String) = {
+  def registerStation(user: String, from: Station, to: Station) = {
     val newDoc = BSONDocument(
       "name" -> user
     )
 
     val updateDoc = BSONDocument(
       "name" -> user,
-      "from" -> from,
-      "to" -> to,
+      "from" -> from.code,
+      "to" -> to.code,
       "updated" -> BSONDateTime(DateTime.now().getMillis)
     )
 
     collectionStations.update(newDoc, updateDoc, upsert = true)
   }
 
-  private def getStationsAndUsers() = {
+  private def getStationsAndUsers = {
     val cursor = collectionStations.find(BSONDocument()).cursor[BSONDocument]
     val list = cursor.collect[List]()
 
@@ -91,9 +120,9 @@ object Notifier {
       val notTypeString = doc.getAs[String]("type")
       val uuidString = doc.getAs[String]("uuid")
 
-      (notTypeString, uuidString) match {
-        case (notType, uuid) =>
-          Some(NotificationType.withName(notType.get), uuid.get)
+      (NotificationType.getFromString(notTypeString), uuidString) match {
+        case (Some(notType), Some(uuid)) =>
+          Some(notType, uuid)
         case (_, _) =>
           None
       }
@@ -104,10 +133,10 @@ object Notifier {
     Logger.debug("Notify users: " + user + " " + advice.vertrekVertraging)
 
     getNotificationTypesForUser(user).map(_.map {
-      case (NotificationType.EmailNotification, email) =>
-        EmailNotification(email, "Notification", advice.statusString)
-      case (NotificationType.PushNotification, pushToken) =>
-        PushNotification(pushToken, "Notification", advice.statusString)
+      case (_, email) =>
+        SendEmailNotification(email, "Notification", advice.statusString)
+      case (_, pushToken) =>
+        SendPushNotification(pushToken, "Notification", advice.statusString)
     }).map(ask(notifyActor, _))
   }
 
@@ -131,7 +160,7 @@ object Notifier {
 
   // make this more modular without side-effects
   def notifyUsers() = {
-    getStationsAndUsers().map { sauFuture =>
+    getStationsAndUsers.map { sauFuture =>
       sauFuture.foreach { sau =>
         val stations = sau._1
         val users = sau._2

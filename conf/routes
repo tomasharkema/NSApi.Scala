@@ -4,16 +4,21 @@
 
 # Home page
 GET        /                                              controllers.Application.index
+GET        /search                                        controllers.Application.search
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file                                  controllers.Assets.versioned(path="/public", file: Asset)
 
+# API STUFF
 GET        /api/stations                                  controllers.Api.stations
 GET        /api/advices                                   controllers.Api.advices(from: String, to: String)
 GET        /api/advices/future                            controllers.Api.advicesFuture(from: String, to: String)
 GET        /api/advices/first                             controllers.Api.adviceFirstPossible(from: String, to: String)
 GET        /api/register/:name                            controllers.Api.registerStation(name, from: String, to: String)
 GET        /api/register/:name/:registerType/:uuid        controllers.Api.registerUUID(name, registerType, uuid)
+GET        /api/search                                    controllers.Api.search(query: String)
+GET        /api/search/nearest                            controllers.Api.searchNearest(lat: Double, lon: Double)
 
 GET        /ping                                          controllers.Ping.ping
 GET        /log                                           controllers.Log.log

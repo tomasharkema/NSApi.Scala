@@ -20,8 +20,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object NotifyActor {
   def props = Props[NotifyActor]
 
-  case class EmailNotification(emailaddress: String, subject: String, message: String)
-  case class PushNotification(uuid: String, title: String, message: String)
+  case class SendEmailNotification(emailaddress: String, subject: String, message: String)
+  case class SendPushNotification(uuid: String, title: String, message: String)
 }
 
 object Push {
@@ -58,10 +58,10 @@ class NotifyActor extends Actor with ActorLogging {
   }
 
   def receive = {
-    case EmailNotification(emailaddress, subject, message) =>
+    case SendEmailNotification(emailaddress, subject, message) =>
       Logger.info("Notify user " + emailaddress + " " + subject + " " + message)
       sender() ! email(emailaddress, subject, message).map(res => Logger.info("Email to " + emailaddress + " " + res))
-    case PushNotification(uuid, title, message) =>
+    case SendPushNotification(uuid, title, message) =>
       Logger.info("Push user " + uuid + " " + title + " " + message)
       try {
         val result = push(uuid, title, message)

@@ -1,21 +1,27 @@
+package global
+
 import java.io.{File, FileOutputStream}
 
 import _root_.actor.PushActor
-import play.api.libs.ws.WS
-import settings.Settings
-import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
-import play.api.{Play, Application, GlobalSettings, Logger}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.concurrent.Akka
 import akka.actor.Props
-import play.api.libs.iteratee._
+import api.{NSApi, Station}
 import play.api.Play.current
+import play.api.libs.concurrent.Akka
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.iteratee._
+import play.api.libs.ws.WS
+import play.api.{Application, GlobalSettings, Logger}
+import settings.Settings
+
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.DurationInt
 
 /**
  * Created by tomas on 14-06-15.
  */
 object Global extends GlobalSettings {
+
+  var stationsCache: Seq[Station] = List()
 
   override def onStart(app: Application) = {
     val controllerPath = controllers.routes.Ping.ping.url
@@ -23,10 +29,9 @@ object Global extends GlobalSettings {
       case play.api.Mode.Test => // do not schedule anything for Test
       case _ => pushDaemon(app)
     }
-    println("Download APNS File")
-    downloadApns().onComplete { file =>
-      println("Download APNS File completed")
-    }
+
+    downloadApns()
+    stationsCache = Await.result(NSApi.stations, 10 seconds)
   }
 
   private def downloadApns() = {
