@@ -3,14 +3,24 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import play.api.Logger
-import play.api.test.WithApplication
+import play.api.test.{PlaySpecification, WithApplication}
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.Await
 import searching.Search._
 
 @RunWith(classOf[JUnitRunner])
-class SearchSpec extends Specification {
+class SearchSpec extends PlaySpecification {
   "Station Search" should {
+
+    "give no results with empty query" in new WithApplication() {
+      val stations = Await.result(NSApi.stations, 10 seconds)
+      stations must have length greaterThan(0)
+
+      val results = searchStations("", stations)
+
+      results must be empty
+    }
+
     "bring correct station for query to top" in new WithApplication{
 
       val stations = Await.result(NSApi.stations, 10 seconds)
@@ -21,7 +31,7 @@ class SearchSpec extends Specification {
       }
     }
 
-    "bring correct station for synoniem query to top" in new WithApplication{
+    "bring correct station for synonym query to top" in new WithApplication {
 
       val stations = Await.result(NSApi.stations, 10 seconds)
       stations must have length greaterThan(0)
@@ -50,7 +60,6 @@ class SearchSpec extends Specification {
 
   private def searchForIndex(query: String, comperable: (Station, String) => Boolean, placeInList: Seq[Station] => Int, stations: Seq[Station]): (Int, Int, Option[Seq[Station]]) = {
     val splitQuery = query.split(" ").flatMap(_.split("-"))
-      //.filter(!_.equals("Hbf"))
       .toSeq
 
     var stationName = if (splitQuery.length > 1) splitQuery.sliding(2).map(_.head).toList.mkString(" ") + " " else ""

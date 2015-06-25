@@ -88,4 +88,54 @@ class ApiTest extends Specification {
       stations.head.code must be equalTo "HT"
     }
   }
+
+  "Register Api" should {
+    "register user with push" in new WithApplication() {
+      val req = FakeRequest(GET, controllers.routes.Api.registerUUID("tomas_TEST", "PUSH", "FAKE_TOKEN").url)
+
+      val Some(result) = route(req)
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      charset(result) must beSome("utf-8")
+      val responseNode = Json.parse(contentAsString(result))
+
+      (responseNode \ "success").get.as[Boolean] must be equalTo true
+    }
+
+    "not register user with abigous type" in new WithApplication() {
+      val req = FakeRequest(GET, controllers.routes.Api.registerUUID("tomas_TEST", "ABC", "FAKE_TOKEN").url)
+
+      val Some(result) = route(req)
+      status(result) must equalTo(NOT_FOUND)
+      contentType(result) must beSome("application/json")
+      charset(result) must beSome("utf-8")
+      val responseNode = Json.parse(contentAsString(result))
+
+      (responseNode \ "success").get.as[Boolean] must be equalTo false
+    }
+
+    "register user with existing stations" in new WithApplication() {
+      val req = FakeRequest(GET, controllers.routes.Api.registerStation("tomas_TEST", "ASD", "KBW").url)
+
+      val Some(result) = route(req)
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("application/json")
+      charset(result) must beSome("utf-8")
+      val responseNode = Json.parse(contentAsString(result))
+
+      (responseNode \ "success").get.as[Boolean] must be equalTo true
+    }
+
+    "not register user with non-existing stations" in new WithApplication() {
+      val req = FakeRequest(GET, controllers.routes.Api.registerStation("tomas_TEST", "ABC", "DEF").url)
+
+      val Some(result) = route(req)
+      status(result) must equalTo(NOT_FOUND)
+      contentType(result) must beSome("application/json")
+      charset(result) must beSome("utf-8")
+      val responseNode = Json.parse(contentAsString(result))
+
+      (responseNode \ "success").get.as[Boolean] must be equalTo false
+    }
+  }
 }

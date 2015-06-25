@@ -68,15 +68,32 @@ class Api @Inject() (cached: Cached) extends Controller {
     }
   }
 
-  def registerStation(user: String, from: String, to: String) = Action.async {
-    Notifier.registerStation(user, from, to).map { res =>
-      Ok(Json.obj("success" -> res.ok))
+  def registerStation(user: String, fromString: String, toString: String) = Action.async {
+    // from to validation
+
+    val fromStation = Global.stationsCache.find(_.code == fromString)
+    val toStation = Global.stationsCache.find(_.code == toString)
+
+    (fromStation, toStation) match {
+      case (Some(from), Some(to)) =>
+        Notifier.registerStation(user, from, to).map { res =>
+          Ok(Json.obj("success" -> res.ok))
+        }
+      case _ =>
+        Future.apply(NotFound(Json.obj("success" -> false)))
     }
   }
 
   def registerUUID(user: String, registerType: String, uuid: String) = Action.async {
-    Notifier.registerUUID(user, registerType, uuid).map { res =>
-      Ok(Json.obj("success" -> res.ok))
+    // registerType validation
+
+    NotificationType.getFromString(registerType) match {
+      case Some(regType) =>
+        Notifier.registerUUID(user, regType, uuid).map { res =>
+          Ok(Json.obj("success" -> res.ok))
+        }
+      case _ =>
+        Future.apply(NotFound(Json.obj("success" -> false)))
     }
   }
 

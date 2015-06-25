@@ -2,9 +2,6 @@ package utils;
 
 import org.apache.commons.lang3.StringUtils;
 
-/**
- * Created by tomas on 20-06-15.
- */
 public class SearchUtils {
 
     public static double similarity(String s1, String s2) {
@@ -14,9 +11,7 @@ public class SearchUtils {
         }
         int longerLength = longer.length();
         if (longerLength == 0) { return 1.0; /* both strings are zero length */ }
-        // If you have StringUtils, you can use it to calculate the edit distance:
         return (longerLength - StringUtils.getLevenshteinDistance(longer, shorter)) /
                                (double) longerLength;
-
     }
 }

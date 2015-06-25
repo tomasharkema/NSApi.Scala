@@ -1,5 +1,5 @@
 import actor.NotifyActor
-import actor.NotifyActor.PushNotification
+import actor.NotifyActor.SendPushNotification
 import akka.actor.Props
 import akka.util.Timeout
 import org.junit.runner.RunWith
@@ -22,7 +22,7 @@ class PushSpec extends Specification {
     "send notifcation" in new WithApplication {
       val notifyActor = Akka.system.actorOf(Props[NotifyActor], name = "notify-actor")
 
-      val testNotification = ask(notifyActor, PushNotification("", "TEST", "TEST"))
+      val testNotification = ask(notifyActor, SendPushNotification("", "TEST", "TEST"))
       Await.result(testNotification, 2 seconds) match {
         case e: Exception =>
           throw e
