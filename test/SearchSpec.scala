@@ -3,7 +3,7 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import play.api.Logger
-import play.api.test.{PlaySpecification, WithApplication}
+import play.api.test.{WithServer, PlaySpecification, WithApplication}
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.Await
 import searching.Search._
@@ -12,7 +12,7 @@ import searching.Search._
 class SearchSpec extends PlaySpecification {
   "Station Search" should {
 
-    "give no results with empty query" in new WithApplication() {
+    "give no results with empty query" in new WithServer {
       val stations = Await.result(NSApi.stations, 10 seconds)
       stations must have length greaterThan(0)
 
@@ -21,7 +21,7 @@ class SearchSpec extends PlaySpecification {
       results must be empty
     }
 
-    "bring correct station for query to top" in new WithApplication{
+    "bring correct station for query to top" in new WithServer {
 
       val stations = Await.result(NSApi.stations, 10 seconds)
       stations must have length greaterThan(0)
@@ -31,7 +31,7 @@ class SearchSpec extends PlaySpecification {
       }
     }
 
-    "bring correct station for synonym query to top" in new WithApplication {
+    "bring correct station for synonym query to top" in new WithServer {
 
       val stations = Await.result(NSApi.stations, 10 seconds)
       stations must have length greaterThan(0)
@@ -46,7 +46,7 @@ class SearchSpec extends PlaySpecification {
       }
     }
 
-    "bring correct station for code query to top" in new WithApplication{
+    "bring correct station for code query to top" in new WithServer {
 
       val stations = Await.result(NSApi.stations, 10 seconds)
       stations must have length greaterThan(0)
@@ -80,7 +80,7 @@ class SearchSpec extends PlaySpecification {
   }
 
   "Station Location Search" should {
-    "show the closest station for location" in new WithApplication() {
+    "show the closest station for location" in new WithServer() {
       val stations = Await.result(NSApi.stations, 10 seconds)
       stations must have length greaterThan(0)
 
@@ -88,7 +88,7 @@ class SearchSpec extends PlaySpecification {
       stationSearch must have length greaterThan(0)
     }
 
-    "show the closest station for a set of locations" in new WithApplication() {
+    "show the closest station for a set of locations" in new WithServer() {
       val stations = Await.result(NSApi.stations, 10 seconds)
       stations must have length greaterThan(0)
 
@@ -109,7 +109,7 @@ class SearchSpec extends PlaySpecification {
       }
     }
 
-    "show the closest station for a its own location" in new WithApplication() {
+    "show the closest station for a its own location" in new WithServer {
       val stations = Await.result(NSApi.stations, 10 seconds)
       stations must have length greaterThan(0)
 
@@ -120,7 +120,7 @@ class SearchSpec extends PlaySpecification {
       }
     }
 
-    "get the designated station in less than 0.75 times the keystrokes of the length of the name, or when not, it must be in the top 5" in new WithApplication() {
+    "get the designated station in less than 0.75 times the keystrokes of the length of the name, or when not, it must be in the top 5" in new WithServer() {
       val stations = Await.result(NSApi.stations, 10 seconds).filter(_.code != "BUENDE")
       stations must have length greaterThan(0)
 
