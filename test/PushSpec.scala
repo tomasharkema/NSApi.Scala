@@ -1,10 +1,12 @@
 import actor.NotifyActor
-import actor.NotifyActor.SendPushNotification
+import actor.NotifyActor.{SendEmailNotification, SendPushNotification}
 import akka.actor.Props
 import akka.util.Timeout
 import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
+import play.api.UnexpectedException
+import play.api.libs.ws.WSResponse
 import play.api.test.WithApplication
 import play.libs.Akka
 import akka.pattern.ask
@@ -20,6 +22,7 @@ class PushSpec extends Specification {
 
   "PushNotifications" should {
     "send notifcation" in new WithApplication {
+
       val notifyActor = Akka.system.actorOf(Props[NotifyActor], name = "notify-actor")
 
       val testNotification = ask(notifyActor, SendPushNotification("", "TEST", "TEST"))

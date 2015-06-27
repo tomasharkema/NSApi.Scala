@@ -5,6 +5,7 @@ import actor.NotifyActor._
 import akka.util.Timeout
 import api.{Station, Advice, NSApi}
 import connection.Connection
+import controllers.NotificationType._
 import org.joda.time.DateTime
 import play.api.Logger
 import play.libs.Akka
@@ -26,24 +27,11 @@ case object New extends Updateable
 case object NeedsUpdate extends Updateable
 case object NoUpdateNeeded extends Updateable
 
-//object NotificationType extends Enumeration {
-//  val PushNotification = Value("PUSH")
-//  val EmailNotification = Value("EMAIL")
-//}
-
-sealed trait NotificationType {
-  val value: String
-}
-
-case object EmailNotification extends NotificationType {
-  val value: String = "EMAIL"
-}
-
-case object PushNotification extends NotificationType {
-  val value: String = "PUSH"
-}
-
 object NotificationType {
+  sealed abstract class NotificationType(val value: String)
+  case object EmailNotification extends NotificationType("EMAIL")
+  case object PushNotification extends NotificationType("PUSH")
+
   val values = Seq(EmailNotification, PushNotification)
 
   def getFromString(string: String): Option[NotificationType] = {
@@ -61,6 +49,7 @@ object NotificationType {
 }
 
 object Notifier {
+
   val collectionUUID = Connection.getCollection("users_uuid")
   val collectionStations = Connection.getCollection("users_stations")
   val collectionAdvices = Connection.getCollection("advices")
@@ -133,11 +122,11 @@ object Notifier {
     Logger.debug("Notify users: " + user + " " + advice.vertrekVertraging)
 
     getNotificationTypesForUser(user).map(_.map {
-      case (_, email) =>
+      case (EmailNotification, email) =>
         SendEmailNotification(email, "Notification", advice.statusString)
-      case (_, pushToken) =>
+      case (PushNotification, pushToken) =>
         SendPushNotification(pushToken, "Notification", advice.statusString)
-    }).map(ask(notifyActor, _))
+    }).map(_.map(ask(notifyActor, _)))
   }
 
   private def updateIfNeeded(advice: Advice): Future[Updateable] = {
@@ -172,7 +161,7 @@ object Notifier {
               users.foreach(notifyUser(advice, _))
             case _ =>
               Logger.debug("No update needed for " + advice.request + " " + advice.vertrekVertraging)
-//              users.foreach(notifyUser(advice, _))
+              //users.foreach(notifyUser(advice, _))
           }
         })
       }
