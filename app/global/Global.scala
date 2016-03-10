@@ -11,6 +11,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee._
 import play.api.libs.ws.WS
 import play.api.{Application, GlobalSettings, Logger}
+import searching.Search
 import settings.Settings
 
 import scala.concurrent.{Await, Future}
@@ -32,6 +33,7 @@ object Global extends GlobalSettings {
 
     downloadApns()
     stationsCache = Await.result(NSApi.stations, 10 seconds)
+    Search.saveStations(stationsCache)
   }
 
   private def downloadApns() = {

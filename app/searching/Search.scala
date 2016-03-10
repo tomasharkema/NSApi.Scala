@@ -1,8 +1,9 @@
 package searching
 
+import actor.ElasticSearchActor.{InsertStations, SearchForStation}
 import actor.SearchActor.StationSearch
 import actor.SearchActor.StationLocationSearch
-import actor.{SearchActor, NotifyActor}
+import actor.{ElasticSearchActor, SearchActor, NotifyActor}
 import akka.actor.Props
 import akka.util.Timeout
 import api.Station
@@ -19,6 +20,7 @@ object Search {
   implicit val timeout = Timeout(5 seconds)
 
   val searchActor = Akka.system.actorOf(Props[SearchActor], name = "search-actor")
+  val esActor = Akka.system.actorOf(Props[ElasticSearchActor], name = "ec-actor")
 
   def searchStations(query: String, stations: Seq[Station]): Seq[(Double, Station)] = {
     if (query == "") {
@@ -71,6 +73,9 @@ object Search {
   }
 
   def stations(query: String, stations: Seq[Station]): Future[Seq[(Double, Station)]] = {
+
+    ask(esActor, SearchForStation(query))
+
     ask(searchActor, StationSearch(query, stations)).map {
       case seq: Seq[(Double, Station)] =>
         seq
@@ -86,5 +91,9 @@ object Search {
       case _ =>
         List()
     }
+  }
+
+  def saveStations(stations: Seq[Station]) = {
+    ask(esActor, InsertStations(stations))
   }
 }
