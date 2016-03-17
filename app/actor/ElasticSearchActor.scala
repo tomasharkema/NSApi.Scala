@@ -2,7 +2,7 @@ package actor
 
 import java.net.URL
 
-import actor.ESQueries.{ESSearchTerm, ESSearchQuery}
+import actor.ESQueries.{ESWildcardQuery, ESSearchTerm, ESSearchQuery}
 import actor.ElasticSearchActor.{InsertStations, SearchForStation}
 import akka.actor.Actor.Receive
 import akka.actor.{Props, Actor}
@@ -37,6 +37,20 @@ object ESQueries {
     }
   }
 
+  case class ESWildcardQuery(queryString: String)
+
+  implicit val esWildcardQuery: Writes[ESWildcardQuery] = new Writes[ESWildcardQuery] {
+    override def writes(searchQuery: ESWildcardQuery): JsValue = {
+      Json.obj(
+        "query" -> Json.obj(
+          "wildcard" -> Json.obj(
+            "name" -> searchQuery.queryString
+          )
+        )
+      )
+    }
+  }
+
   case class ESSearchTerm(sets: Map[String, String])
 
   implicit val esSearchTermWrites: Writes[ESSearchTerm] = new Writes[ESSearchTerm] {
@@ -57,7 +71,7 @@ object ESQueries {
 class ElasticSearchActor extends Actor {
   import play.api.Play.current
 
-  val elasticSearchHost = Uri.parse(new URL("http", "server.local", 9200, "").toString)
+  val elasticSearchHost = Uri.parse(new URL("http", "local.harkema.io", 9200, "").toString)
 
   override def receive = {
     case InsertStations(stations) =>
@@ -78,14 +92,15 @@ class ElasticSearchActor extends Actor {
 
     case SearchForStation(stationQuery) =>
 
-      val query = ESSearchQuery(stationQuery)//ESSearchTerm(Map("name" -> stationQuery))
+      val query = ESSearchQuery("*" + stationQuery.toLowerCase + "*")//ESWildcardQuery("*"+stationQuery+"*")//ESSearchQuery("*" + stationQuery + "*")//ESSearchTerm(Map("name" -> stationQuery))
+      val url = elasticSearchHost / "stations" / "_search"
 
-      sender() ! WS.url(elasticSearchHost / "stations" / "_search")
+      sender() ! WS.url(url)
         .post(Json.toJson(query))
         .onSuccess { case result =>
-
+          println(url)
           println(Json.stringify(Json.toJson(query)))
-          println(result.body)
+          println("==> " + result.body)
         }
   }
 }
