@@ -161,7 +161,7 @@ object Notifier {
               users.foreach(notifyUser(advice, _))
             case _ =>
               Logger.debug("No update needed for " + advice.request + " " + advice.vertrekVertraging)
-              //users.foreach(notifyUser(advice, _))
+//              users.foreach(notifyUser(advice, _))
           }
         })
       }

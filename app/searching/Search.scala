@@ -74,7 +74,7 @@ object Search {
 
   def stations(query: String, stations: Seq[Station]): Future[Seq[(Double, Station)]] = {
 
-    ask(esActor, SearchForStation(query))
+//    ask(esActor, SearchForStation(query))
 
     ask(searchActor, StationSearch(query, stations)).map {
       case seq: Seq[(Double, Station)] =>

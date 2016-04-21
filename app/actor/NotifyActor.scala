@@ -53,8 +53,7 @@ class NotifyActor extends Actor {
   }
 
   @throws(classOf[NetworkIOException])
-  private def push(uuid: String, title: String, message: String) = {
-    val payload = APNS.newPayload.alertBody(message).badge(1).sound("default").build()
+  private def push(uuid: String, payload: String) = {
     Push.ApnsService.push(uuid, payload)
   }
 
@@ -65,7 +64,7 @@ class NotifyActor extends Actor {
     case e: SendPushNotification =>
       Logger.info("Push user " + e.uuid + " " + e.title + " " + e.message)
       try {
-        val result = push(e.uuid, e.title, e.message)
+        val result = push(e.uuid, "{\"aps\": {\"content-available\":1}, \"content-available\":1, \"info\": {\"message\": \"" + e.message + "\"}}")
         sender() ! result
       } catch {
         case e: Exception =>
