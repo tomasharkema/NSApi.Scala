@@ -91,7 +91,7 @@ class ApiTest extends Specification {
 
   "Register Api" should {
     "register user with push" in new WithApplication() {
-      val req = FakeRequest(GET, controllers.routes.Api.registerUUID("tomas_TEST", "PUSH", "FAKE_TOKEN").url)
+      val req = FakeRequest(GET, controllers.routes.Api.registerUUID("tomas_TEST", "PUSH", "FAKE_TOKEN", Some("production")).url)
 
       val Some(result) = route(req)
       status(result) must equalTo(OK)
@@ -103,7 +103,7 @@ class ApiTest extends Specification {
     }
 
     "not register user with abigous type" in new WithApplication() {
-      val req = FakeRequest(GET, controllers.routes.Api.registerUUID("tomas_TEST", "ABC", "FAKE_TOKEN").url)
+      val req = FakeRequest(GET, controllers.routes.Api.registerUUID("tomas_TEST", "ABC", "FAKE_TOKEN", Some("production")).url)
 
       val Some(result) = route(req)
       status(result) must equalTo(NOT_FOUND)
