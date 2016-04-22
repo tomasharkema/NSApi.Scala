@@ -84,12 +84,12 @@ class Api @Inject() (cached: Cached) extends Controller {
     }
   }
 
-  def registerUUID(user: String, registerType: String, uuid: String) = Action.async {
+  def registerUUID(user: String, registerType: String, uuid: String, env: Option[String]) = Action.async {
     // registerType validation
 
     NotificationType.getFromString(registerType) match {
       case Some(regType) =>
-        Notifier.registerUUID(user, regType, uuid).map { res =>
+        Notifier.registerUUID(user, regType, uuid, env).map { res =>
           Ok(Json.obj("success" -> res.ok))
         }
       case _ =>

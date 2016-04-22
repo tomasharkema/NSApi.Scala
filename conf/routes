@@ -16,7 +16,7 @@ GET        /api/advices                                   controllers.Api.advice
 GET        /api/advices/future                            controllers.Api.advicesFuture(from: String, to: String)
 GET        /api/advices/first                             controllers.Api.adviceFirstPossible(from: String, to: String)
 GET        /api/register/:name                            controllers.Api.registerStation(name, from: String, to: String)
-GET        /api/register/:name/:registerType/:uuid        controllers.Api.registerUUID(name, registerType, uuid)
+GET        /api/register/:name/:registerType/:uuid        controllers.Api.registerUUID(name, registerType, uuid, env: Option[String])
 GET        /api/search                                    controllers.Api.search(query: String)
 GET        /api/search/nearest                            controllers.Api.searchNearest(lat: Double, lon: Double)
 

@@ -22,19 +22,16 @@ object NotifyActor {
   def props = Props[NotifyActor]
   
   case class SendEmailNotification(emailaddress: String, subject: String, message: String)
-  case class SendPushNotification(uuid: String, title: String, message: String)
+  case class SendPushNotification(uuid: String, title: String, message: String, env: Option[String])
 }
 
 object Push {
-  val ApnsService = {
-    if (Settings.Environment == "PROD") {
-      APNS.newService.withCert(Settings.ApnsCertLocation, Settings.ApnsCertPass)
-        .withProductionDestination.build
-    } else {
-      APNS.newService.withCert(Settings.ApnsCertLocation, Settings.ApnsCertPass)
-        .withSandboxDestination.build
-    }
-  }
+  val ApnsServiceProd =
+    APNS.newService.withCert(Settings.ApnsCertLocationProd, Settings.ApnsCertPass)
+      .withProductionDestination.build
+
+  val ApnsServiceSandbox = APNS.newService.withCert(Settings.ApnsCertLocation, Settings.ApnsCertPass)
+      .withSandboxDestination.build
 }
 
 class NotifyActor extends Actor {
@@ -53,8 +50,12 @@ class NotifyActor extends Actor {
   }
 
   @throws(classOf[NetworkIOException])
-  private def push(uuid: String, payload: String) = {
-    Push.ApnsService.push(uuid, payload)
+  private def push(uuid: String, payload: String, env: String) = {
+    if (env == "sandbox") {
+      Push.ApnsServiceSandbox.push(uuid, payload)
+    } else {
+      Push.ApnsServiceProd.push(uuid, payload)
+    }
   }
 
   def receive = {
@@ -64,7 +65,7 @@ class NotifyActor extends Actor {
     case e: SendPushNotification =>
       Logger.info("Push user " + e.uuid + " " + e.title + " " + e.message)
       try {
-        val result = push(e.uuid, "{\"aps\": {\"content-available\":1}, \"content-available\":1, \"info\": {\"message\": \"" + e.message + "\"}}")
+        val result = push(e.uuid, "{\"aps\": {\"content-available\":1}, \"content-available\":1, \"info\": {\"message\": \"" + e.message + "\"}}", e.env.getOrElse("sandbox"))
         sender() ! result
       } catch {
         case e: Exception =>

@@ -57,7 +57,7 @@ object Notifier {
 
   implicit val timeout = Timeout(5 seconds)
 
-  def registerUUID(user: String, registerType: NotificationType,  uuid: String) = {
+  def registerUUID(user: String, registerType: NotificationType,  uuid: String, env: Option[String]) = {
     val newDoc = BSONDocument(
       "name" -> user,
       "type" -> registerType.value,
@@ -68,6 +68,7 @@ object Notifier {
       "name" -> user,
       "type" -> registerType.value,
       "uuid" -> uuid,
+      "env" -> env.orNull,
       "updated" -> BSONDateTime(DateTime.now().getMillis)
     )
 
@@ -108,10 +109,11 @@ object Notifier {
     userCollection.map(_.map { doc =>
       val notTypeString = doc.getAs[String]("type")
       val uuidString = doc.getAs[String]("uuid")
+      val envString = doc.getAs[String]("env")
 
       (NotificationType.getFromString(notTypeString), uuidString) match {
         case (Some(notType), Some(uuid)) =>
-          Some(notType, uuid)
+          Some(notType, uuid, envString)
         case (_, _) =>
           None
       }
@@ -122,10 +124,10 @@ object Notifier {
     Logger.debug("Notify users: " + user + " " + advice.vertrekVertraging)
 
     getNotificationTypesForUser(user).map(_.map {
-      case (EmailNotification, email) =>
+      case (EmailNotification, email, _) =>
         SendEmailNotification(email, "Notification", advice.statusString)
-      case (PushNotification, pushToken) =>
-        SendPushNotification(pushToken, "Notification", advice.statusString)
+      case (PushNotification, pushToken, env) =>
+        SendPushNotification(pushToken, "Notification", advice.statusString, env)
     }).map(_.map(ask(notifyActor, _)))
   }
 
