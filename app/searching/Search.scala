@@ -94,6 +94,6 @@ object Search {
   }
 
   def saveStations(stations: Seq[Station]) = {
-    ask(esActor, InsertStations(stations))
+//    ask(esActor, InsertStations(stations))
   }
 }

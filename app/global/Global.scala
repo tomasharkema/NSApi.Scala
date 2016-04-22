@@ -31,16 +31,17 @@ object Global extends GlobalSettings {
       case _ => pushDaemon(app)
     }
 
-    downloadApns()
+    downloadApns(Settings.ApnsCertLocation, Settings.ApnsCertUrl)
+    downloadApns(Settings.ApnsCertLocationProd, Settings.ApnsCertUrlProd)
     stationsCache = Await.result(NSApi.stations, 10 seconds)
     Search.saveStations(stationsCache)
   }
 
-  private def downloadApns() = {
+  private def downloadApns(location: String, url: String) = {
 
-    val file = new File(Settings.ApnsCertLocation)
+    val file = new File(location)
 
-    val futureResponse = WS.url(Settings.ApnsCertUrl)
+    val futureResponse = WS.url(url)
       .getStream()
 
     val downloadedFile: Future[File] = futureResponse.flatMap {

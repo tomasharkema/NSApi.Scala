@@ -7,7 +7,9 @@ import play.api.Play
  */
 object Settings {
   val ApnsCertUrl = sys.env.getOrElse("APNS_PUSH_CERT", Play.current.configuration.getString("apns.cert").getOrElse(""))
+  val ApnsCertUrlProd = sys.env.getOrElse("APNS_PUSH_CERT_PROD", Play.current.configuration.getString("apns.certProd").getOrElse(""))
   val ApnsCertPass = sys.env.getOrElse("APNS_PUSH_PASS", Play.current.configuration.getString("apns.pass").getOrElse(""))
   val ApnsCertLocation = "apns-cert.p12"
+  val ApnsCertLocationProd = "apns-cert-prod.p12"
   val Environment = sys.env.getOrElse("ENVIRONMENT", Play.current.configuration.getString("env.environment").getOrElse(""))
 }
