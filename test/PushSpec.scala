@@ -25,7 +25,7 @@ class PushSpec extends Specification {
 
       val notifyActor = Akka.system.actorOf(Props[NotifyActor], name = "notify-actor")
 
-      val testNotification = ask(notifyActor, SendPushNotification("", "TEST", "TEST"))
+      val testNotification = ask(notifyActor, SendPushNotification("", "TEST", "TEST", Some("production")))
       Await.result(testNotification, 2 seconds) match {
         case e: Exception =>
           throw e
