@@ -67,6 +67,6 @@ object Global extends GlobalSettings {
   def pushDaemon(app: Application) = {
     Logger.info("Scheduling the push daemon")
     val pushActor = Akka.system(app).actorOf(Props(new PushActor()))
-    Akka.system(app).scheduler.schedule(0 seconds, 30 seconds, pushActor, "pushDaemon")
+    Akka.system(app).scheduler.schedule(0 seconds, 2 minutes, pushActor, "pushDaemon")
   }
 }
