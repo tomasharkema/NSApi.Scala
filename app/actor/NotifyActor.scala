@@ -65,7 +65,7 @@ class NotifyActor extends Actor {
     case e: SendPushNotification =>
       Logger.info("Push user " + e.uuid + " " + e.title + " " + e.message)
       try {
-        val result = push(e.uuid, "{\"aps\": {\"content-available\":1}, \"content-available\":1, \"info\": {\"message\": \"" + e.message + "\"}}", e.env.getOrElse("sandbox"))
+        val result = push(e.uuid, "{\"aps\": {\"content-available\":1}, \"content-available\":1, \"info\": {\"message\": \"" + e.message + "\"}}", e.env.getOrElse("production"))
         sender() ! result
       } catch {
         case e: Exception =>
