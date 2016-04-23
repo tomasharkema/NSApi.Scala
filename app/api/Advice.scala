@@ -1,6 +1,6 @@
 package api
 
-import org.joda.time.DateTime
+import org.joda.time.{Minutes, DateTime}
 import play.api.libs.json._
 
 import scala.xml._
@@ -8,8 +8,8 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 /**
- * Created by tomas on 14-06-15.
- */
+  * Created by tomas on 14-06-15.
+  */
 
 case class OVTime(planned: DateTime,
                   actual: DateTime)
@@ -147,18 +147,27 @@ case class Advice(overstappen: Int,
                   vertrekVertraging: Option[String],
                   status: String,
                   request: AdviceRequest) {
-  val statusString = request.from + " " + request.to + " " + vertrekVertraging.getOrElse("")
+  val statusString = vertrekVertraging.getOrElse("")
 }
 
 object Advice {
   def parseAdvice(el: Node, from: String, to: String) = {
+    val vertrek = OVTime.fromString((el \ "GeplandeVertrekTijd").text, (el \ "ActueleVertrekTijd").text)
+    val aankomst = OVTime.fromString((el \ "GeplandeAankomstTijd").text, (el \ "ActueleAankomstTijd").text)
+    val difference = Minutes.minutesBetween(vertrek.planned, vertrek.actual).getMinutes
+    val vertrekVertraging = if (difference > 0) {
+      Some("+" + difference + " min")
+    } else {
+      (el \ "AankomstVertraging").headOption.map(_.text)
+    }
+
     Advice(
       overstappen = (el \ "AantalOverstappen").text.toInt,
-      vertrek = OVTime.fromString((el \ "GeplandeVertrekTijd").text, (el \ "ActueleVertrekTijd").text),
-      aankomst = OVTime.fromString((el \ "GeplandeAankomstTijd").text, (el \ "ActueleAankomstTijd").text),
+      vertrek = vertrek,
+      aankomst = aankomst,
       melding = (el \ "Melding").headOption.map(Melding.parseMelding),
       reisDeel = (el \\ "ReisDeel").map(ReisDeel.parseReisdeel),
-      vertrekVertraging = (el \ "AankomstVertraging").headOption.map(_.text),
+      vertrekVertraging = vertrekVertraging,
       status = (el \ "Status").text,
       AdviceRequest(from, to)
     )

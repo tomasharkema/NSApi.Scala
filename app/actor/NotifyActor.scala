@@ -51,10 +51,15 @@ class NotifyActor extends Actor {
 
   @throws(classOf[NetworkIOException])
   private def push(uuid: String, payload: String, env: String) = {
-    if (env == "sandbox") {
-      Push.ApnsServiceSandbox.push(uuid, payload)
-    } else {
-      Push.ApnsServiceProd.push(uuid, payload)
+    if (uuid != "FAKE_TOKEN") {
+      val result = if (env == "sandbox") {
+        Logger.info("Push SANDBOX env: " + env + "\n" + payload)
+        Push.ApnsServiceSandbox.push(uuid, payload)
+      } else {
+        Logger.info("Push PROD env: " + env + "\n" + payload)
+        Push.ApnsServiceProd.push(uuid, payload)
+      }
+      println(result)
     }
   }
 
@@ -63,9 +68,10 @@ class NotifyActor extends Actor {
       Logger.info("Email user " + e.emailaddress + " " + e.subject + " " + e.message)
       sender() ! email(e.emailaddress, e.subject, e.message).map(res => Logger.info("Email to " + e.emailaddress + " " + res))
     case e: SendPushNotification =>
-      Logger.info("Push user " + e.uuid + " " + e.title + " " + e.message)
+      Logger.info("Push user " + e.uuid + " " + e.title + " " + e.message + " " + e.env)
       try {
-        val result = push(e.uuid, "{\"aps\": {\"content-available\":1}, \"content-available\":1, \"info\": {\"message\": \"" + e.message + "\"}}", e.env.getOrElse("production"))
+        val payload = "{\"aps\": {\"content-available\":1}, \"message\": \"" + e.message + "\"}"
+        val result = push(e.uuid, payload, e.env.getOrElse("production"))
         sender() ! result
       } catch {
         case e: Exception =>
